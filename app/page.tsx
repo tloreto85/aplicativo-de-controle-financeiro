@@ -1,23 +1,138 @@
+"use client"
+
+import { useState } from "react"
+import { Plus, Wallet } from "lucide-react"
+import { useFinance } from "@/lib/use-finance"
+import type { Category } from "@/lib/types"
+import { formatBRL } from "@/lib/format"
+import { Button } from "@/components/ui/button"
+import { CategoryCard } from "@/components/category-card"
+import { CategoryDialog } from "@/components/category-dialog"
+import { IncomePanel } from "@/components/income-panel"
+import { TargetsEditor } from "@/components/targets-editor"
+import { ConsolidatedPanel } from "@/components/consolidated-panel"
+
 export default function Page() {
+  const {
+    state,
+    loaded,
+    addCategory,
+    updateCategory,
+    removeCategory,
+    addExpense,
+    updateExpense,
+    removeExpense,
+    addIncome,
+    removeIncome,
+    updateTargets,
+  } = useFinance()
+
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [editing, setEditing] = useState<Category | null>(null)
+
+  const totalExpenses = state.categories.reduce(
+    (sum, c) => sum + c.expenses.reduce((s, e) => s + e.amount, 0),
+    0,
+  )
+  const totalIncome = state.incomes.reduce((sum, i) => sum + i.amount, 0)
+
+  function openNew() {
+    setEditing(null)
+    setDialogOpen(true)
+  }
+
+  function openEdit(category: Category) {
+    setEditing(category)
+    setDialogOpen(true)
+  }
+
+  if (!loaded) {
+    return (
+      <main className="flex min-h-svh items-center justify-center text-muted-foreground">
+        Carregando…
+      </main>
+    )
+  }
+
   return (
-    <main className="relative flex min-h-screen items-center justify-center bg-[color:light-dark(#fff,#000)] text-[color:light-dark(#000,#fff)]">
-      <svg
-        aria-hidden="true"
-        className="size-20"
-        fill="none"
-        viewBox="0 0 20 20"
-        xmlns="http://www.w3.org/2000/svg"
-        stroke="currentColor"
-        strokeWidth="0.5"
-      >
-        <path
-          d="M14.2 14.2H17V6.9375C17 4.76288 15.2371 3 13.0625 3H5.8V5.8M14.2 14.2V7.79063L7.79062 14.2H14.2ZM14.2 14.2V17H6.9375C4.76288 17 3 15.2371 3 13.0625V5.8H5.8M5.8 5.8V12.2313L12.2313 5.8H5.8Z"
-          strokeLinejoin="round"
-        />
-      </svg>
-      <p className="absolute left-1/2 top-[calc(50%+56px)] -translate-x-1/2 whitespace-nowrap text-sm font-medium text-muted-foreground">
-        Your v0 generation will show here.
-      </p>
+    <main className="min-h-svh">
+      <header className="border-b border-border bg-card">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <Wallet className="h-5 w-5" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold leading-tight text-card-foreground">Controle Financeiro</h1>
+              <p className="text-sm text-muted-foreground">Despesas, vencimentos e regra 50-30-20</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="flex flex-col items-end">
+              <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Saldo</span>
+              <span
+                className={`font-mono text-base font-bold ${
+                  totalIncome - totalExpenses >= 0 ? "text-primary" : "text-destructive"
+                }`}
+              >
+                {formatBRL(totalIncome - totalExpenses)}
+              </span>
+            </div>
+            <Button onClick={openNew}>
+              <Plus className="h-4 w-4" />
+              Nova categoria
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6">
+        <section>
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Despesas por categoria
+          </h2>
+          {state.categories.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-border bg-card py-12 text-center">
+              <p className="text-sm text-muted-foreground">Nenhuma categoria ainda.</p>
+              <Button variant="outline" className="mt-3" onClick={openNew}>
+                <Plus className="h-4 w-4" />
+                Criar primeira categoria
+              </Button>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {state.categories.map((category) => (
+                <CategoryCard
+                  key={category.id}
+                  category={category}
+                  onAddExpense={addExpense}
+                  onUpdateExpense={updateExpense}
+                  onRemoveExpense={removeExpense}
+                  onRemoveCategory={removeCategory}
+                  onEditCategory={openEdit}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="grid gap-4 lg:grid-cols-2">
+          <IncomePanel incomes={state.incomes} onAdd={addIncome} onRemove={removeIncome} />
+          <TargetsEditor targets={state.targets} onChange={updateTargets} />
+        </section>
+
+        <section>
+          <ConsolidatedPanel categories={state.categories} incomes={state.incomes} targets={state.targets} />
+        </section>
+      </div>
+
+      <CategoryDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        editing={editing}
+        onCreate={addCategory}
+        onUpdate={updateCategory}
+      />
     </main>
   )
 }
