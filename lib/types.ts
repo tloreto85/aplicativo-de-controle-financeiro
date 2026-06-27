@@ -29,6 +29,8 @@ export interface FinanceState {
   incomes: Income[]
   // target percentages per bucket (sum should be ~100)
   targets: Record<Bucket, number>
+  // calendar year this base belongs to; used to roll over at year-end
+  year: number
 }
 
 export const BUCKET_LABELS: Record<Bucket, string> = {

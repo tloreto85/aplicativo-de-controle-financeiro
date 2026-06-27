@@ -13,6 +13,8 @@ Os dados são salvos automaticamente no **navegador (localStorage)** — não h�
 - **Filtro por mês** — visualize apenas as despesas de um período específico; todos os totais, gráficos e o consolidado recalculam automaticamente.
 - **Exportação CSV/Excel** — baixe os lançamentos do período filtrado em um arquivo `.csv` pronto para abrir no Excel (pt-BR).
 - **Gráfico de distribuição** — donut com a participação percentual de cada categoria no total de despesas.
+- **Limpar todos os dados** — botão no topo (com confirmação) que zera categorias, despesas e receitas a qualquer momento, voltando as metas ao padrão.
+- **Virada de ano automática** — ao abrir o app em um ano novo, os dados do ano anterior são exportados automaticamente em um arquivo Excel/CSV e uma base em branco é criada para o novo ano, com um aviso explicando o que aconteceu.
 
 ## Tecnologias
 
@@ -95,6 +97,16 @@ Os dados são salvos automaticamente no **navegador (localStorage)** — não h�
 7. **Exporte quando precisar.** O botão **Exportar CSV** baixa os lançamentos do período selecionado para guardar ou analisar no Excel/Google Sheets.
 
 8. **Analise a distribuição.** O **gráfico de distribuição** mostra rapidamente para onde o seu dinheiro está indo.
+
+9. **Comece do zero quando quiser.** Use **Limpar dados** (no topo) para zerar tudo a qualquer momento. Há uma confirmação antes de apagar — exporte o CSV antes, se quiser manter um histórico.
+
+### Fechamento de ano automático
+
+Ao abrir o aplicativo já em um novo ano (ex: a primeira vez que você acessar em 2027 com dados de 2026), o app automaticamente:
+
+1. **Exporta** todos os lançamentos do ano anterior em um arquivo `controle-financeiro-ANO.csv` (download imediato; se o navegador bloquear, há um botão para baixar manualmente).
+2. **Cria uma base em branco** para o novo ano.
+3. **Exibe um aviso** confirmando que os dados foram arquivados e que uma nova base foi iniciada.
 
 > **Importante:** os dados ficam salvos somente no navegador onde foram inseridos. Se limpar os dados do navegador, ou usar outro dispositivo/navegador, os lançamentos não estarão disponíveis. Use a exportação CSV como cópia de segurança.
 
