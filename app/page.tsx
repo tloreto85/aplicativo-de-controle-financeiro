@@ -14,11 +14,17 @@ import { TargetsEditor } from "@/components/targets-editor"
 import { ConsolidatedPanel } from "@/components/consolidated-panel"
 import { DistributionChart } from "@/components/distribution-chart"
 import { FilterBar, ALL_MONTHS } from "@/components/filter-bar"
+import { ClearDataDialog } from "@/components/clear-data-dialog"
+import { YearRolloverDialog } from "@/components/year-rollover-dialog"
 
 export default function Page() {
   const {
     state,
     loaded,
+    rollover,
+    clearAll,
+    downloadRollover,
+    dismissRollover,
     addCategory,
     updateCategory,
     removeCategory,
@@ -109,6 +115,7 @@ export default function Page() {
                 {formatBRL(totalIncome - totalExpenses)}
               </span>
             </div>
+            <ClearDataDialog onClear={clearAll} />
             <Button onClick={openNew}>
               <Plus className="h-4 w-4" />
               Nova categoria
@@ -175,6 +182,8 @@ export default function Page() {
         onCreate={addCategory}
         onUpdate={updateCategory}
       />
+
+      <YearRolloverDialog info={rollover} onDownload={downloadRollover} onDismiss={dismissRollover} />
     </main>
   )
 }
