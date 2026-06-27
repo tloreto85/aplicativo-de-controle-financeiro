@@ -1,16 +1,19 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { Plus, Wallet } from "lucide-react"
 import { useFinance } from "@/lib/use-finance"
 import type { Category } from "@/lib/types"
-import { formatBRL } from "@/lib/format"
+import { formatBRL, monthKey } from "@/lib/format"
+import { buildExpensesCsv, downloadCsv } from "@/lib/export"
 import { Button } from "@/components/ui/button"
 import { CategoryCard } from "@/components/category-card"
 import { CategoryDialog } from "@/components/category-dialog"
 import { IncomePanel } from "@/components/income-panel"
 import { TargetsEditor } from "@/components/targets-editor"
 import { ConsolidatedPanel } from "@/components/consolidated-panel"
+import { DistributionChart } from "@/components/distribution-chart"
+import { FilterBar, ALL_MONTHS } from "@/components/filter-bar"
 
 export default function Page() {
   const {
@@ -29,8 +32,30 @@ export default function Page() {
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<Category | null>(null)
+  const [selectedMonth, setSelectedMonth] = useState<string>(ALL_MONTHS)
 
-  const totalExpenses = state.categories.reduce(
+  // All distinct "yyyy-mm" keys present across expenses, most recent first.
+  const availableMonths = useMemo(() => {
+    const set = new Set<string>()
+    for (const c of state.categories) {
+      for (const e of c.expenses) {
+        const key = monthKey(e.date)
+        if (key) set.add(key)
+      }
+    }
+    return Array.from(set).sort().reverse()
+  }, [state.categories])
+
+  // Categories with expenses filtered by the selected month (mutations still use ids).
+  const filteredCategories = useMemo(() => {
+    if (selectedMonth === ALL_MONTHS) return state.categories
+    return state.categories.map((c) => ({
+      ...c,
+      expenses: c.expenses.filter((e) => monthKey(e.date) === selectedMonth),
+    }))
+  }, [state.categories, selectedMonth])
+
+  const totalExpenses = filteredCategories.reduce(
     (sum, c) => sum + c.expenses.reduce((s, e) => s + e.amount, 0),
     0,
   )
@@ -44,6 +69,12 @@ export default function Page() {
   function openEdit(category: Category) {
     setEditing(category)
     setDialogOpen(true)
+  }
+
+  function handleExport() {
+    const csv = buildExpensesCsv(filteredCategories)
+    const suffix = selectedMonth === ALL_MONTHS ? "todos" : selectedMonth
+    downloadCsv(`despesas-${suffix}.csv`, csv)
   }
 
   if (!loaded) {
@@ -87,6 +118,13 @@ export default function Page() {
       </header>
 
       <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6">
+        <FilterBar
+          months={availableMonths}
+          selected={selectedMonth}
+          onSelect={setSelectedMonth}
+          onExport={handleExport}
+        />
+
         <section>
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
             Despesas por categoria
@@ -101,7 +139,7 @@ export default function Page() {
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {state.categories.map((category) => (
+              {filteredCategories.map((category) => (
                 <CategoryCard
                   key={category.id}
                   category={category}
@@ -122,7 +160,11 @@ export default function Page() {
         </section>
 
         <section>
-          <ConsolidatedPanel categories={state.categories} incomes={state.incomes} targets={state.targets} />
+          <DistributionChart categories={filteredCategories} />
+        </section>
+
+        <section>
+          <ConsolidatedPanel categories={filteredCategories} incomes={state.incomes} targets={state.targets} />
         </section>
       </div>
 
