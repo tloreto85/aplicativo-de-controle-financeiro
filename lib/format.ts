@@ -42,3 +42,11 @@ export function monthLabel(key: string): string {
   if (!y || !m) return key
   return `${MONTHS_LONG[m - 1]} ${y}`
 }
+
+// Full Brazilian date, e.g. "08/07/2026".
+export function formatDateBR(iso: string): string {
+  if (!iso) return "—"
+  const [y, m, d] = iso.split("-")
+  if (!y || !m || !d) return "—"
+  return `${d}/${m}/${y}`
+}

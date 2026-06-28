@@ -10,8 +10,8 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Controle Financeiro',
-  description: 'Sistema de controle financeiro pessoal com regra 50-30-20',
+  title: 'Painel Financeiro',
+  description: 'Controle financeiro pessoal e listas de compras de supermercado',
   generator: 'v0.app',
   icons: {
     icon: [
