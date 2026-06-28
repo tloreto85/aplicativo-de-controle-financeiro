@@ -31,12 +31,14 @@ export function CategoryManager({ categories, onAdd, onRemove }: Props) {
 
   return (
     <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Tag className="h-4 w-4" />
-          Categorias
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button variant="outline" size="sm">
+            <Tag className="h-4 w-4" />
+            Categorias
+          </Button>
+        }
+      />
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Gerenciar categorias</DialogTitle>

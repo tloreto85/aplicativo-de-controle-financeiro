@@ -55,7 +55,13 @@ export default function ListDetailPage({ params }: { params: Promise<{ id: strin
         <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-5">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
-              <Button render={<Link href="/compras" />} variant="ghost" size="icon" aria-label="Voltar para listas">
+              <Button
+                render={<Link href="/compras" />}
+                nativeButton={false}
+                variant="ghost"
+                size="icon"
+                aria-label="Voltar para listas"
+              >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">

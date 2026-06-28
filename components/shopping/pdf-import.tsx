@@ -101,12 +101,14 @@ export function PdfImport({ categories, onImport, onNewCategory }: Props) {
         if (!o) reset()
       }}
     >
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <FileUp className="h-4 w-4" />
-          Importar PDF
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button variant="outline" size="sm">
+            <FileUp className="h-4 w-4" />
+            Importar PDF
+          </Button>
+        }
+      />
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Importar lista de um PDF</DialogTitle>

@@ -67,10 +67,15 @@ export async function POST(req: Request) {
 
     return Response.json({ items: items.filter((i) => i.name) })
   } catch (err) {
-    console.log("[v0] parse-pdf error:", err instanceof Error ? err.message : err)
-    return Response.json(
-      { error: "Não foi possível ler o PDF. Tente outro arquivo ou insira os itens manualmente." },
-      { status: 500 },
-    )
+    const message = err instanceof Error ? err.message : String(err)
+    console.log("[v0] parse-pdf error:", message)
+
+    // Surface a clear, actionable message when the AI Gateway is not billable yet.
+    const isBilling = /credit card|billing|payment|quota|insufficient|unlock your free credits/i.test(message)
+    const friendly = isBilling
+      ? "A leitura por IA precisa que o AI Gateway esteja ativo (com um cartão cadastrado no projeto Vercel). Enquanto isso, adicione os itens manualmente."
+      : "Não foi possível ler o PDF. Tente outro arquivo ou insira os itens manualmente."
+
+    return Response.json({ error: friendly }, { status: 500 })
   }
 }

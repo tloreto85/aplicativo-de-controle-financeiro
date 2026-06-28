@@ -35,10 +35,14 @@ export default function ComprasPage() {
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <Button asChild variant="ghost" size="icon" aria-label="Voltar ao menu">
-              <Link href="/">
-                <ArrowLeft className="h-5 w-5" />
-              </Link>
+            <Button
+              render={<Link href="/" />}
+              nativeButton={false}
+              variant="ghost"
+              size="icon"
+              aria-label="Voltar ao menu"
+            >
+              <ArrowLeft className="h-5 w-5" />
             </Button>
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <ShoppingCart className="h-5 w-5" />
@@ -49,11 +53,9 @@ export default function ComprasPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button asChild variant="outline">
-              <Link href="/compras/comparativo">
-                <BarChart3 className="h-4 w-4" />
-                Comparativo
-              </Link>
+            <Button render={<Link href="/compras/comparativo" />} nativeButton={false} variant="outline">
+              <BarChart3 className="h-4 w-4" />
+              Comparativo
             </Button>
             <Button onClick={() => setDialogOpen(true)}>
               <Plus className="h-4 w-4" />

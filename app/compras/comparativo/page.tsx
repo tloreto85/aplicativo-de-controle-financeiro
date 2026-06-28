@@ -64,7 +64,13 @@ export default function ComparativoPage() {
     <main className="min-h-svh">
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-5">
-          <Button render={<Link href="/compras" />} variant="ghost" size="icon" aria-label="Voltar para listas">
+          <Button
+            render={<Link href="/compras" />}
+            nativeButton={false}
+            variant="ghost"
+            size="icon"
+            aria-label="Voltar para listas"
+          >
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
