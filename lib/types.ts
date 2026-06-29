@@ -6,6 +6,9 @@ export interface Expense {
   amount: number
   // ISO date string (yyyy-mm-dd) or empty when not informed
   date: string
+  // whether the expense has already been paid (true) or is still open (false).
+  // Open expenses feed "Estimativa de Despesa"; paid ones feed "Despesas Consolidadas".
+  paid: boolean
 }
 
 export interface Category {

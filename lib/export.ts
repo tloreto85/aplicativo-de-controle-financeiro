@@ -11,7 +11,7 @@ function csvCell(value: string | number): string {
 
 // Builds a CSV (separated by ";" for pt-BR Excel compatibility) listing every expense.
 export function buildExpensesCsv(categories: Category[]): string {
-  const header = ["Categoria", "Grupo", "Descrição", "Valor", "Data"]
+  const header = ["Categoria", "Grupo", "Descrição", "Valor", "Data", "Status"]
   const rows: string[] = [header.map(csvCell).join(";")]
 
   for (const category of categories) {
@@ -24,6 +24,7 @@ export function buildExpensesCsv(categories: Category[]): string {
           // Use comma as decimal separator so Excel pt-BR reads it as a number.
           csvCell(expense.amount.toFixed(2).replace(".", ",")),
           csvCell(expense.date),
+          csvCell(expense.paid ? "Pago" : "Em aberto"),
         ].join(";"),
       )
     }

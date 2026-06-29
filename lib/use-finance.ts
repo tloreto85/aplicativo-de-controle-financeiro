@@ -41,9 +41,9 @@ const defaultState: FinanceState = {
       color: "var(--chart-1)",
       bucket: "essenciais",
       expenses: [
-        { id: uid(), name: "Aluguel", amount: 1800, date: "" },
-        { id: uid(), name: "Energia", amount: 216, date: "" },
-        { id: uid(), name: "Internet", amount: 122, date: "" },
+        { id: uid(), name: "Aluguel", amount: 1800, date: "", paid: true },
+        { id: uid(), name: "Energia", amount: 216, date: "", paid: false },
+        { id: uid(), name: "Internet", amount: 122, date: "", paid: false },
       ],
     },
     {
@@ -52,8 +52,8 @@ const defaultState: FinanceState = {
       color: "var(--chart-5)",
       bucket: "pessoal",
       expenses: [
-        { id: uid(), name: "Celular", amount: 185, date: "" },
-        { id: uid(), name: "Academia", amount: 100, date: "" },
+        { id: uid(), name: "Celular", amount: 185, date: "", paid: true },
+        { id: uid(), name: "Academia", amount: 100, date: "", paid: false },
       ],
     },
     {
@@ -61,7 +61,7 @@ const defaultState: FinanceState = {
       name: "Dívidas",
       color: "var(--chart-3)",
       bucket: "dividas",
-      expenses: [{ id: uid(), name: "IPTU", amount: 167, date: "2026-07-01" }],
+      expenses: [{ id: uid(), name: "IPTU", amount: 167, date: "2026-07-01", paid: false }],
     },
     {
       id: uid(),
@@ -91,7 +91,11 @@ export function useFinance() {
         const parsed = JSON.parse(raw) as FinanceState
         const storedYear = parsed.year ?? CURRENT_YEAR
         const restored: FinanceState = {
-          categories: parsed.categories ?? [],
+          // Ensure every expense has a `paid` flag (older data may lack it).
+          categories: (parsed.categories ?? []).map((c) => ({
+            ...c,
+            expenses: (c.expenses ?? []).map((e) => ({ ...e, paid: e.paid ?? false })),
+          })),
           incomes: parsed.incomes ?? [],
           targets: parsed.targets ?? defaultState.targets,
           year: storedYear,
