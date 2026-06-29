@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Plus, Trash2, Check, X, Pencil } from "lucide-react"
+import { Plus, Trash2, Check, X, Pencil, CircleCheck, Circle } from "lucide-react"
 import type { Category, Expense } from "@/lib/types"
 import { BUCKET_LABELS } from "@/lib/types"
 import { formatBRL, formatDateShort } from "@/lib/format"
@@ -31,11 +31,15 @@ export function CategoryCard({
   const [editingId, setEditingId] = useState<string | null>(null)
 
   const total = category.expenses.reduce((sum, e) => sum + e.amount, 0)
+  // Paid expenses feed "Despesas Consolidadas"; open ones feed "Estimativa de Despesa".
+  const paidTotal = category.expenses.filter((e) => e.paid).reduce((sum, e) => sum + e.amount, 0)
+  const openTotal = total - paidTotal
 
   function handleAdd() {
     const value = Number.parseFloat(amount.replace(",", "."))
     if (!name.trim() || Number.isNaN(value)) return
-    onAddExpense(category.id, { name: name.trim(), amount: value, date })
+    // New expenses start as "em aberto" (unpaid).
+    onAddExpense(category.id, { name: name.trim(), amount: value, date, paid: false })
     setName("")
     setAmount("")
     setDate("")
@@ -72,6 +76,7 @@ export function CategoryCard({
       </header>
 
       <div className="flex items-center gap-2 border-b border-border px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        <span className="w-5" aria-hidden="true" />
         <span className="flex-1">Descrição</span>
         <span className="w-20 text-right">R$</span>
         <span className="w-14 text-right">Data</span>
@@ -98,8 +103,28 @@ export function CategoryCard({
               />
             ) : (
               <>
-                <span className="flex-1 truncate text-card-foreground">{e.name}</span>
-                <span className="w-20 text-right font-mono text-card-foreground">{formatBRL(e.amount)}</span>
+                <button
+                  type="button"
+                  onClick={() => onUpdateExpense(category.id, e.id, { paid: !e.paid })}
+                  className="shrink-0 rounded p-0.5"
+                  aria-label={e.paid ? `Marcar ${e.name} como em aberto` : `Marcar ${e.name} como pago`}
+                  aria-pressed={e.paid}
+                  title={e.paid ? "Pago" : "Em aberto"}
+                >
+                  {e.paid ? (
+                    <CircleCheck className="h-4 w-4 text-primary" />
+                  ) : (
+                    <Circle className="h-4 w-4 text-muted-foreground/60 transition-colors hover:text-primary" />
+                  )}
+                </button>
+                <span className={`flex-1 truncate ${e.paid ? "text-muted-foreground line-through" : "text-card-foreground"}`}>
+                  {e.name}
+                </span>
+                <span
+                  className={`w-20 text-right font-mono ${e.paid ? "text-muted-foreground" : "text-card-foreground"}`}
+                >
+                  {formatBRL(e.amount)}
+                </span>
                 <span className="w-14 text-right text-xs text-muted-foreground">{formatDateShort(e.date)}</span>
                 <div className="flex w-6 items-center justify-end gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
                   <button
@@ -155,6 +180,17 @@ export function CategoryCard({
         </Button>
       </div>
 
+      <div className="flex items-center justify-between gap-4 border-t border-border px-4 py-1.5 text-[11px]">
+        <span className="flex items-center gap-1.5 text-muted-foreground">
+          <CircleCheck className="h-3 w-3 text-primary" />
+          Pago <span className="font-mono text-card-foreground">{formatBRL(paidTotal)}</span>
+        </span>
+        <span className="flex items-center gap-1.5 text-muted-foreground">
+          <Circle className="h-3 w-3 text-muted-foreground/60" />
+          Em aberto <span className="font-mono text-card-foreground">{formatBRL(openTotal)}</span>
+        </span>
+      </div>
+
       <div className="flex items-center justify-between rounded-b-lg bg-total px-4 py-2">
         <span className="text-xs font-semibold uppercase tracking-wide text-total-foreground">Total</span>
         <span className="font-mono text-sm font-bold text-total-foreground">{formatBRL(total)}</span>
@@ -175,15 +211,30 @@ function EditExpenseRow({
   const [name, setName] = useState(expense.name)
   const [amount, setAmount] = useState(String(expense.amount))
   const [date, setDate] = useState(expense.date)
+  const [paid, setPaid] = useState(expense.paid)
 
   function save() {
     const value = Number.parseFloat(amount.replace(",", "."))
     if (!name.trim() || Number.isNaN(value)) return
-    onSave({ name: name.trim(), amount: value, date })
+    onSave({ name: name.trim(), amount: value, date, paid })
   }
 
   return (
     <div className="flex w-full items-center gap-1.5">
+      <button
+        type="button"
+        onClick={() => setPaid((p) => !p)}
+        className="shrink-0 rounded p-0.5"
+        aria-label={paid ? "Marcar como em aberto" : "Marcar como pago"}
+        aria-pressed={paid}
+        title={paid ? "Pago" : "Em aberto"}
+      >
+        {paid ? (
+          <CircleCheck className="h-4 w-4 text-primary" />
+        ) : (
+          <Circle className="h-4 w-4 text-muted-foreground/60" />
+        )}
+      </button>
       <Input value={name} onChange={(e) => setName(e.target.value)} className="h-7 flex-1 text-sm" aria-label="Nome" />
       <Input
         value={amount}

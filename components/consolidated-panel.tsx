@@ -6,6 +6,7 @@ import { formatBRL } from "@/lib/format"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
+import { CircleCheck, Circle } from "lucide-react"
 
 interface Props {
   categories: Category[]
@@ -25,17 +26,25 @@ const BUCKET_COLORS: Record<Bucket, string> = {
 export function ConsolidatedPanel({ categories, incomes, targets }: Props) {
   const totalIncome = incomes.reduce((sum, i) => sum + i.amount, 0)
 
-  const realizedByBucket = BUCKETS.reduce(
-    (acc, b) => {
-      acc[b] = categories
-        .filter((c) => c.bucket === b)
-        .reduce((sum, c) => sum + c.expenses.reduce((s, e) => s + e.amount, 0), 0)
-      return acc
-    },
-    {} as Record<Bucket, number>,
-  )
+  // Open (unpaid) expenses feed "Estimativa de Despesa";
+  // paid expenses feed "Despesas Consolidadas".
+  const openByBucket = {} as Record<Bucket, number>
+  const paidByBucket = {} as Record<Bucket, number>
+  for (const b of BUCKETS) {
+    const cats = categories.filter((c) => c.bucket === b)
+    openByBucket[b] = cats.reduce(
+      (sum, c) => sum + c.expenses.filter((e) => !e.paid).reduce((s, e) => s + e.amount, 0),
+      0,
+    )
+    paidByBucket[b] = cats.reduce(
+      (sum, c) => sum + c.expenses.filter((e) => e.paid).reduce((s, e) => s + e.amount, 0),
+      0,
+    )
+  }
 
-  const totalExpenses = BUCKETS.reduce((sum, b) => sum + realizedByBucket[b], 0)
+  const totalOpen = BUCKETS.reduce((sum, b) => sum + openByBucket[b], 0)
+  const totalPaid = BUCKETS.reduce((sum, b) => sum + paidByBucket[b], 0)
+  const totalExpenses = totalOpen + totalPaid
   const diff = totalIncome - totalExpenses
 
   return (
@@ -49,44 +58,45 @@ export function ConsolidatedPanel({ categories, incomes, targets }: Props) {
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-x-4 px-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
             <span>Grupo</span>
-            <span className="w-24 text-right">Estimado</span>
-            <span className="w-24 text-right">Realizado</span>
+            <span className="w-24 text-right" title="Soma das despesas em aberto (não pagas)">
+              Estimativa
+            </span>
+            <span className="w-24 text-right" title="Soma das despesas pagas">
+              Consolidado
+            </span>
             <span className="w-16 text-right">Status</span>
           </div>
 
           {BUCKETS.map((b) => {
-            const estimated = (targets[b] / 100) * totalIncome
-            const realized = realizedByBucket[b]
-            const pctOfIncome = totalIncome > 0 ? Math.round((realized / totalIncome) * 100) : 0
-            const within = realized <= estimated + 0.001
+            const meta = (targets[b] / 100) * totalIncome
+            const open = openByBucket[b]
+            const paid = paidByBucket[b]
+            const realized = open + paid
+            const within = realized <= meta + 0.001
+            const pctOfMeta = meta > 0 ? Math.round((realized / meta) * 100) : 0
             return (
               <div key={b} className="flex flex-col gap-1.5">
                 <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-x-4">
                   <div className="flex items-center gap-2">
                     <span className="h-3 w-3 rounded-sm" style={{ backgroundColor: BUCKET_COLORS[b] }} />
                     <span className="text-sm font-medium text-card-foreground">{BUCKET_LABELS[b]}</span>
-                    <span className="text-xs text-muted-foreground">({targets[b]}%)</span>
+                    <span className="text-xs text-muted-foreground">
+                      ({targets[b]}% · {formatBRL(meta)})
+                    </span>
                   </div>
-                  <span className="w-24 text-right font-mono text-sm text-muted-foreground">
-                    {formatBRL(estimated)}
-                  </span>
+                  <span className="w-24 text-right font-mono text-sm text-muted-foreground">{formatBRL(open)}</span>
                   <span className="w-24 text-right font-mono text-sm font-semibold text-card-foreground">
-                    {formatBRL(realized)}
+                    {formatBRL(paid)}
                   </span>
                   <span
-                    className={`w-16 text-right text-xs font-semibold ${
-                      within ? "text-primary" : "text-destructive"
-                    }`}
+                    className={`w-16 text-right text-xs font-semibold ${within ? "text-primary" : "text-destructive"}`}
                   >
                     {within ? "Ok" : "Acima"}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Progress
-                    value={Math.min(pctOfIncome / (targets[b] || 100) * 100, 100)}
-                    className="h-1.5 flex-1"
-                  />
-                  <span className="w-10 text-right text-xs tabular-nums text-muted-foreground">{pctOfIncome}%</span>
+                  <Progress value={Math.min(pctOfMeta, 100)} className="h-1.5 flex-1" />
+                  <span className="w-10 text-right text-xs tabular-nums text-muted-foreground">{pctOfMeta}%</span>
                 </div>
               </div>
             )
@@ -107,6 +117,21 @@ export function ConsolidatedPanel({ categories, incomes, targets }: Props) {
               </div>
             )
           })}
+          <Separator className="my-2" />
+          <div className="flex items-center justify-between text-sm">
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <Circle className="h-3 w-3 text-muted-foreground/60" />
+              Estimativa de Despesa
+            </span>
+            <span className="font-mono font-semibold text-card-foreground">{formatBRL(totalOpen)}</span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <CircleCheck className="h-3 w-3 text-primary" />
+              Despesas Consolidadas
+            </span>
+            <span className="font-mono font-semibold text-card-foreground">{formatBRL(totalPaid)}</span>
+          </div>
           <Separator className="my-2" />
           <div className="flex items-center justify-between text-sm">
             <span className="font-medium text-card-foreground">Total despesas</span>
