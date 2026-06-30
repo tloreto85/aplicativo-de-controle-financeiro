@@ -3,7 +3,7 @@
 import { useMemo } from "react"
 import { Bar, BarChart, Cell, LabelList, XAxis, YAxis } from "recharts"
 import type { Debt } from "@/lib/debt-types"
-import { monthlyImpact, remainingAmount, paidAmount } from "@/lib/debt-types"
+import { monthlyImpact, remainingAmount, paidAmount, openInstallments } from "@/lib/debt-types"
 import { formatBRL } from "@/lib/format"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
@@ -25,11 +25,18 @@ export function BudgetImpact({ debts, monthlyIncome }: Props) {
   const chartData = useMemo(
     () =>
       debts
-        .map((d, i) => ({
-          name: d.creditor,
-          value: monthlyImpact(d),
-          color: BAR_COLORS[i % BAR_COLORS.length],
-        }))
+        .map((d, i) => {
+          const value = monthlyImpact(d)
+          const open = openInstallments(d)
+          return {
+            name: d.creditor,
+            value,
+            open,
+            // Right-side label combines the monthly value and how many installments remain.
+            label: `${formatBRL(value)} · ${open} ${open === 1 ? "parcela" : "parcelas"} em aberto`,
+            color: BAR_COLORS[i % BAR_COLORS.length],
+          }
+        })
         .filter((d) => d.value > 0),
     [debts],
   )
@@ -38,6 +45,12 @@ export function BudgetImpact({ debts, monthlyIncome }: Props) {
   const yAxisWidth = useMemo(() => {
     const longest = chartData.reduce((max, d) => Math.max(max, d.name.length), 0)
     return Math.min(Math.max(longest * 7 + 16, 90), 200)
+  }, [chartData])
+
+  // Right margin adapts to the longest label so "valor · N parcelas em aberto" fits.
+  const rightMargin = useMemo(() => {
+    const longest = chartData.reduce((max, d) => Math.max(max, d.label.length), 0)
+    return Math.min(Math.max(longest * 6 + 16, 80), 240)
   }, [chartData])
 
   // Height grows with the number of debts so every bar/creditor is visible.
@@ -90,7 +103,9 @@ export function BudgetImpact({ debts, monthlyIncome }: Props) {
 
         {chartData.length > 0 ? (
           <div>
-            <p className="mb-2 text-xs font-medium text-muted-foreground">Parcela mensal por dívida</p>
+            <p className="mb-2 text-xs font-medium text-muted-foreground">
+              Parcela mensal e parcelas em aberto por dívida
+            </p>
             <ChartContainer
               config={{ value: { label: "Parcela mensal" } }}
               className="w-full"
@@ -99,7 +114,7 @@ export function BudgetImpact({ debts, monthlyIncome }: Props) {
               <BarChart
                 data={chartData}
                 layout="vertical"
-                margin={{ left: 8, right: 64, top: 4, bottom: 4 }}
+                margin={{ left: 8, right: rightMargin, top: 4, bottom: 4 }}
                 barCategoryGap="25%"
               >
                 <XAxis type="number" hide />
@@ -120,11 +135,10 @@ export function BudgetImpact({ debts, monthlyIncome }: Props) {
                     <Cell key={d.name} fill={d.color} />
                   ))}
                   <LabelList
-                    dataKey="value"
+                    dataKey="label"
                     position="right"
                     className="fill-foreground"
                     fontSize={11}
-                    formatter={(value: number) => formatBRL(value)}
                   />
                 </Bar>
               </BarChart>
