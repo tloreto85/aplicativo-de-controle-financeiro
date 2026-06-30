@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { ShoppingCart, Wallet, ArrowRight, Landmark } from "lucide-react"
+import { DebtAlerts } from "@/components/debts/debt-alerts"
 
 const options = [
   {
@@ -34,6 +35,8 @@ export default function MenuPage() {
             Escolha uma das ferramentas abaixo para começar a organizar suas finanças e compras.
           </p>
         </header>
+
+        <DebtAlerts />
 
         <div className="grid gap-4 sm:grid-cols-2">
           {options.map((opt) => {
