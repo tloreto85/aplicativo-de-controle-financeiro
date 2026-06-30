@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ShoppingCart, Wallet, ArrowRight } from "lucide-react"
+import { ShoppingCart, Wallet, ArrowRight, Landmark } from "lucide-react"
 
 const options = [
   {
@@ -13,6 +13,12 @@ const options = [
     title: "Lista de Compras",
     description: "Crie listas de supermercado, importe PDFs e compare preços ao longo do tempo.",
     icon: ShoppingCart,
+  },
+  {
+    href: "/financeiro/dividas",
+    title: "Gestão de Dívidas",
+    description: "Cadastre dívidas, registre pagamentos e acompanhe o impacto no orçamento mensal.",
+    icon: Landmark,
   },
 ]
 

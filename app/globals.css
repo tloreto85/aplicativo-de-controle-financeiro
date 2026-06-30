@@ -171,3 +171,25 @@
     @apply font-sans;
   }
 }
+
+@media print {
+  /* Light, ink-friendly output regardless of the screen color scheme. */
+  :root,
+  :root:not(.light) {
+    color-scheme: light;
+    --background: #ffffff;
+    --foreground: #1a1a1a;
+    --card: #ffffff;
+    --card-foreground: #1a1a1a;
+    --muted-foreground: #555555;
+    --primary: #15803d;
+    --border: #cccccc;
+  }
+  @page {
+    margin: 1.5cm;
+  }
+  html,
+  body {
+    background: #ffffff !important;
+  }
+}
