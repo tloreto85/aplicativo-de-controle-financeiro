@@ -3,7 +3,7 @@
 import { use, useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Calendar, FileSpreadsheet, MapPin, Pencil, ShoppingCart } from "lucide-react"
+import { ArrowLeft, Calendar, FileSpreadsheet, MapPin, Pencil, Printer, ShoppingCart } from "lucide-react"
 import { useShopping } from "@/lib/use-shopping"
 import { listTotal } from "@/lib/shopping-types"
 import { formatBRL, formatDateBR } from "@/lib/format"
@@ -108,6 +108,15 @@ export default function ListDetailPage({ params }: { params: Promise<{ id: strin
             <Button variant="outline" size="sm" onClick={() => exportListToXlsx(list)} disabled={list.items.length === 0}>
               <FileSpreadsheet className="h-4 w-4" />
               Exportar Excel
+            </Button>
+            <Button
+              render={<Link href={`/compras/${list.id}/imprimir`} />}
+              nativeButton={false}
+              variant="outline"
+              size="sm"
+            >
+              <Printer className="h-4 w-4" />
+              Imprimir lista
             </Button>
           </div>
         </div>
