@@ -12,7 +12,7 @@ function uid() {
 // Fields the user provides when creating/editing a debt (computed/derived fields excluded).
 export type DebtInput = Pick<
   Debt,
-  "creditor" | "contract" | "totalAmount" | "installmentPlan" | "installmentCount"
+  "creditor" | "contract" | "dueDate" | "totalAmount" | "installmentPlan" | "installmentCount"
 >
 
 const seedDebts: Debt[] = [
@@ -20,6 +20,7 @@ const seedDebts: Debt[] = [
     id: uid(),
     creditor: "Banco Itaú",
     contract: "Empréstimo pessoal nº 12345",
+    dueDate: "2026-08-05",
     totalAmount: 12000,
     installmentPlan: true,
     installmentCount: 24,
@@ -32,6 +33,7 @@ const seedDebts: Debt[] = [
     id: uid(),
     creditor: "Loja Mais",
     contract: "Cartão - compra de eletrodoméstico",
+    dueDate: "2026-08-10",
     totalAmount: 2400,
     installmentPlan: true,
     installmentCount: 12,
@@ -52,6 +54,7 @@ export function useDebts() {
         setDebts(
           (parsed ?? []).map((d) => ({
             ...d,
+            dueDate: d.dueDate ?? "",
             payments: (d.payments ?? []).map((p) => ({ ...p, note: p.note ?? "" })),
           })),
         )

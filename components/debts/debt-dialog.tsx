@@ -34,6 +34,7 @@ interface Props {
 export function DebtDialog({ open, onOpenChange, editing, onCreate, onUpdate }: Props) {
   const [creditor, setCreditor] = useState("")
   const [contract, setContract] = useState("")
+  const [dueDate, setDueDate] = useState("")
   const [totalAmount, setTotalAmount] = useState("")
   const [installmentPlan, setInstallmentPlan] = useState(false)
   const [installmentCount, setInstallmentCount] = useState("")
@@ -42,6 +43,7 @@ export function DebtDialog({ open, onOpenChange, editing, onCreate, onUpdate }: 
     if (open) {
       setCreditor(editing?.creditor ?? "")
       setContract(editing?.contract ?? "")
+      setDueDate(editing?.dueDate ?? "")
       setTotalAmount(editing ? String(editing.totalAmount) : "")
       setInstallmentPlan(editing?.installmentPlan ?? false)
       setInstallmentCount(editing && editing.installmentCount ? String(editing.installmentCount) : "")
@@ -57,6 +59,7 @@ export function DebtDialog({ open, onOpenChange, editing, onCreate, onUpdate }: 
     const input: DebtInput = {
       creditor: creditor.trim(),
       contract: contract.trim(),
+      dueDate,
       totalAmount: total,
       installmentPlan,
       installmentCount: installmentPlan ? count : 0,
@@ -100,15 +103,27 @@ export function DebtDialog({ open, onOpenChange, editing, onCreate, onUpdate }: 
             />
           </div>
 
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="debt-total">Valor total (R$)</Label>
-            <Input
-              id="debt-total"
-              value={totalAmount}
-              onChange={(e) => setTotalAmount(e.target.value)}
-              placeholder="0,00"
-              inputMode="decimal"
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="debt-total">Valor total (R$)</Label>
+              <Input
+                id="debt-total"
+                value={totalAmount}
+                onChange={(e) => setTotalAmount(e.target.value)}
+                placeholder="0,00"
+                inputMode="decimal"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="debt-due">Data de vencimento</Label>
+              <Input
+                id="debt-due"
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">

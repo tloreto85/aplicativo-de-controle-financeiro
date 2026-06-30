@@ -12,6 +12,8 @@ export interface Debt {
   creditor: string
   // Contrato ou outras informações
   contract: string
+  // Data de vencimento (ISO yyyy-mm-dd) ou vazio quando não informada
+  dueDate: string
   // Valor total devido
   totalAmount: number
   // Parcelamento: true = parcelado, false = à vista
