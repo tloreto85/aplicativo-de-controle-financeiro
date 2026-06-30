@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Pencil, Trash2, Plus, X, CircleCheck } from "lucide-react"
+import { Pencil, Trash2, Plus, X, CircleCheck, CalendarClock } from "lucide-react"
 import type { Debt, DebtPayment } from "@/lib/debt-types"
 import { installmentValue, paidAmount, remainingAmount } from "@/lib/debt-types"
 import { formatBRL, formatDateBR } from "@/lib/format"
@@ -32,6 +32,7 @@ export function DebtCard({ debt, onEdit, onRemove, onAddPayment, onRemovePayment
   const perInstallment = installmentValue(debt)
   const progress = debt.totalAmount > 0 ? (paid / debt.totalAmount) * 100 : 0
   const settled = remaining <= 0
+  const isOverdue = !!debt.dueDate && debt.dueDate < today()
 
   function handleAddPayment() {
     const value = Number.parseFloat(amount.replace(",", "."))
@@ -57,6 +58,17 @@ export function DebtCard({ debt, onEdit, onRemove, onAddPayment, onRemovePayment
               )}
             </div>
             {debt.contract && <p className="truncate text-sm text-muted-foreground">{debt.contract}</p>}
+            {debt.dueDate && (
+              <p
+                className={`mt-0.5 flex items-center gap-1 text-xs ${
+                  !settled && isOverdue ? "font-medium text-destructive" : "text-muted-foreground"
+                }`}
+              >
+                <CalendarClock className="h-3 w-3" />
+                Vence em {formatDateBR(debt.dueDate)}
+                {!settled && isOverdue && " · vencida"}
+              </p>
+            )}
           </div>
           <div className="flex shrink-0 items-center gap-1">
             <button

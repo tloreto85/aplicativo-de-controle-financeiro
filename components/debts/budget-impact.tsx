@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
-import { Bar, BarChart, Cell, XAxis, YAxis } from "recharts"
+import { Bar, BarChart, Cell, LabelList, XAxis, YAxis } from "recharts"
 import type { Debt } from "@/lib/debt-types"
 import { monthlyImpact, remainingAmount, paidAmount } from "@/lib/debt-types"
 import { formatBRL } from "@/lib/format"
@@ -33,6 +33,15 @@ export function BudgetImpact({ debts, monthlyIncome }: Props) {
         .filter((d) => d.value > 0),
     [debts],
   )
+
+  // Y-axis width adapts to the longest creditor name so every label fits.
+  const yAxisWidth = useMemo(() => {
+    const longest = chartData.reduce((max, d) => Math.max(max, d.name.length), 0)
+    return Math.min(Math.max(longest * 7 + 16, 90), 200)
+  }, [chartData])
+
+  // Height grows with the number of debts so every bar/creditor is visible.
+  const chartHeight = useMemo(() => Math.max(chartData.length * 44 + 24, 120), [chartData])
 
   const pctOfIncome = monthlyIncome > 0 ? (totalMonthly / monthlyIncome) * 100 : 0
 
@@ -84,17 +93,24 @@ export function BudgetImpact({ debts, monthlyIncome }: Props) {
             <p className="mb-2 text-xs font-medium text-muted-foreground">Parcela mensal por dívida</p>
             <ChartContainer
               config={{ value: { label: "Parcela mensal" } }}
-              className="h-[220px] w-full"
+              className="w-full"
+              style={{ height: chartHeight }}
             >
-              <BarChart data={chartData} layout="vertical" margin={{ left: 8, right: 16 }}>
+              <BarChart
+                data={chartData}
+                layout="vertical"
+                margin={{ left: 8, right: 64, top: 4, bottom: 4 }}
+                barCategoryGap="25%"
+              >
                 <XAxis type="number" hide />
                 <YAxis
                   type="category"
                   dataKey="name"
-                  width={110}
+                  width={yAxisWidth}
                   tickLine={false}
                   axisLine={false}
-                  tick={{ fontSize: 12 }}
+                  interval={0}
+                  tick={{ fontSize: 12, width: yAxisWidth - 8 }}
                 />
                 <ChartTooltip
                   content={<ChartTooltipContent hideLabel formatter={(value) => formatBRL(Number(value))} />}
@@ -103,6 +119,13 @@ export function BudgetImpact({ debts, monthlyIncome }: Props) {
                   {chartData.map((d) => (
                     <Cell key={d.name} fill={d.color} />
                   ))}
+                  <LabelList
+                    dataKey="value"
+                    position="right"
+                    className="fill-foreground"
+                    fontSize={11}
+                    formatter={(value: number) => formatBRL(value)}
+                  />
                 </Bar>
               </BarChart>
             </ChartContainer>
