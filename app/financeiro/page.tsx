@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, Plus, Wallet } from "lucide-react"
+import { ArrowLeft, Plus, Wallet, Landmark } from "lucide-react"
 import { useFinance } from "@/lib/use-finance"
 import type { Category } from "@/lib/types"
 import { formatBRL, monthKey } from "@/lib/format"
@@ -125,6 +125,14 @@ export default function FinanceiroPage() {
                 {formatBRL(totalIncome - totalExpenses)}
               </span>
             </div>
+            <Button
+              render={<Link href="/financeiro/dividas" />}
+              nativeButton={false}
+              variant="outline"
+            >
+              <Landmark className="h-4 w-4" />
+              Gestão de Dívidas
+            </Button>
             <ClearDataDialog onClear={clearAll} />
             <Button onClick={openNew}>
               <Plus className="h-4 w-4" />
