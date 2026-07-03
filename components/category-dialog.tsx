@@ -30,7 +30,7 @@ interface Props {
   onUpdate: (id: string, patch: { name: string; color: string; bucket: Bucket }) => void
 }
 
-const BUCKETS: Bucket[] = ["essenciais", "dividas", "pessoal", "investimentos"]
+const BUCKETS: Bucket[] = ["essenciais", "dividas", "pessoal", "investimentos", "outros"]
 
 export function CategoryDialog({ open, onOpenChange, editing, onCreate, onUpdate }: Props) {
   const [name, setName] = useState("")
