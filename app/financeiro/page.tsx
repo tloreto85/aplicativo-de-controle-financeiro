@@ -50,8 +50,10 @@ export default function FinanceiroPage() {
     }))
   }, [state.categories, selectedMonth])
 
-  const totalExpenses = filteredCategories.reduce(
-    (sum, c) => sum + c.expenses.reduce((s, e) => s + e.amount, 0),
+  // Saldo considera apenas despesas efetivamente PAGAS; despesas em aberto
+  // (não pagas) não impactam o saldo até serem quitadas.
+  const totalPaidExpenses = filteredCategories.reduce(
+    (sum, c) => sum + c.expenses.filter((e) => e.paid).reduce((s, e) => s + e.amount, 0),
     0,
   )
   const totalIncome = state.incomes.reduce((sum, i) => sum + i.amount, 0)
@@ -107,10 +109,10 @@ export default function FinanceiroPage() {
               <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Saldo</span>
               <span
                 className={`font-mono text-base font-bold ${
-                  totalIncome - totalExpenses >= 0 ? "text-primary" : "text-destructive"
+                  totalIncome - totalPaidExpenses >= 0 ? "text-primary" : "text-destructive"
                 }`}
               >
-                {formatBRL(totalIncome - totalExpenses)}
+                {formatBRL(totalIncome - totalPaidExpenses)}
               </span>
             </div>
             <Button
