@@ -1,6 +1,7 @@
 "use client"
 
-import { ChevronLeft, ChevronRight, Download } from "lucide-react"
+import Link from "next/link"
+import { ChevronLeft, ChevronRight, Download, LayoutList } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 interface Props {
@@ -35,11 +36,12 @@ export function FilterBar({ year, selected, onSelect, onExport }: Props) {
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold text-card-foreground">{year}</span>
           <Button
-            variant={isAll ? "default" : "outline"}
+            render={<Link href="/financeiro/consolidado" />}
+            nativeButton={false}
+            variant="outline"
             size="sm"
-            onClick={() => onSelect(ALL_MONTHS)}
-            aria-pressed={isAll}
           >
+            <LayoutList className="h-4 w-4" />
             Todos os meses
           </Button>
         </div>
