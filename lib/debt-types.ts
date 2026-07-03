@@ -84,13 +84,23 @@ export function currentMonthDueIso(dueDay: number, todayIso: string): string {
   return `${y}-${String(m).padStart(2, "0")}-${String(day).padStart(2, "0")}`
 }
 
+// Indica se houve algum pagamento registrado no mês corrente (mesmo ano e mês
+// de `todayIso`). Um pagamento no mês quita a parcela daquele mês.
+export function hasPaymentInMonth(debt: Debt, todayIso: string): boolean {
+  const monthPrefix = todayIso.slice(0, 7) // "yyyy-mm"
+  return debt.payments.some((p) => p.date.slice(0, 7) === monthPrefix)
+}
+
 // Situação de vencimento com base apenas no DIA do mês:
 // o app verifica se aquele dia, no mês atual, já passou ou não.
 // "próximo do vencimento" = faltam menos de `soonDays` dias (padrão 5).
-// Dívidas quitadas ou sem dia informado não geram alerta.
+// Dívidas quitadas, sem dia informado ou com a parcela do mês já paga
+// não geram alerta.
 export function debtDueStatus(debt: Debt, todayIso: string, soonDays = 5): DueStatus {
   if (remainingAmount(debt) <= 0) return "ok"
   if (!debt.dueDay || debt.dueDay < 1) return "no-date"
+  // Se a parcela deste mês já foi paga, não há atraso nem vencimento próximo.
+  if (hasPaymentInMonth(debt, todayIso)) return "ok"
   const diff = daysUntil(todayIso, currentMonthDueIso(debt.dueDay, todayIso))
   if (diff < 0) return "overdue"
   if (diff < soonDays) return "due-soon"
