@@ -10,6 +10,9 @@ import { Input } from "@/components/ui/input"
 
 interface Props {
   category: Category
+  // Mês selecionado ("yyyy-mm") — novas despesas caem neste mês por padrão.
+  // undefined quando a visão é "Todos os meses".
+  defaultMonth?: string
   onAddExpense: (categoryId: string, expense: Omit<Expense, "id">) => void
   onUpdateExpense: (categoryId: string, expenseId: string, patch: Partial<Omit<Expense, "id">>) => void
   onRemoveExpense: (categoryId: string, expenseId: string) => void
@@ -19,6 +22,7 @@ interface Props {
 
 export function CategoryCard({
   category,
+  defaultMonth,
   onAddExpense,
   onUpdateExpense,
   onRemoveExpense,
@@ -38,8 +42,11 @@ export function CategoryCard({
   function handleAdd() {
     const value = Number.parseFloat(amount.replace(",", "."))
     if (!name.trim() || Number.isNaN(value)) return
+    // Sem data explícita, a despesa cai no mês selecionado (ex.: montar o mês
+    // seguinte com antecedência). No dia 1º por padrão.
+    const finalDate = date || (defaultMonth ? `${defaultMonth}-01` : "")
     // New expenses start as "em aberto" (unpaid).
-    onAddExpense(category.id, { name: name.trim(), amount: value, date, paid: false })
+    onAddExpense(category.id, { name: name.trim(), amount: value, date: finalDate, paid: false })
     setName("")
     setAmount("")
     setDate("")

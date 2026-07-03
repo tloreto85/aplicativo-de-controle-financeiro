@@ -41,18 +41,6 @@ export default function FinanceiroPage() {
   const [editing, setEditing] = useState<Category | null>(null)
   const [selectedMonth, setSelectedMonth] = useState<string>(ALL_MONTHS)
 
-  // All distinct "yyyy-mm" keys present across expenses, most recent first.
-  const availableMonths = useMemo(() => {
-    const set = new Set<string>()
-    for (const c of state.categories) {
-      for (const e of c.expenses) {
-        const key = monthKey(e.date)
-        if (key) set.add(key)
-      }
-    }
-    return Array.from(set).sort().reverse()
-  }, [state.categories])
-
   // Categories with expenses filtered by the selected month (mutations still use ids).
   const filteredCategories = useMemo(() => {
     if (selectedMonth === ALL_MONTHS) return state.categories
@@ -144,7 +132,7 @@ export default function FinanceiroPage() {
 
       <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6">
         <FilterBar
-          months={availableMonths}
+          year={state.year}
           selected={selectedMonth}
           onSelect={setSelectedMonth}
           onExport={handleExport}
@@ -168,6 +156,7 @@ export default function FinanceiroPage() {
                 <CategoryCard
                   key={category.id}
                   category={category}
+                  defaultMonth={selectedMonth === ALL_MONTHS ? undefined : selectedMonth}
                   onAddExpense={addExpense}
                   onUpdateExpense={updateExpense}
                   onRemoveExpense={removeExpense}
