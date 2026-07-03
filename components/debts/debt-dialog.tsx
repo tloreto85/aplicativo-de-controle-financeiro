@@ -34,7 +34,7 @@ interface Props {
 export function DebtDialog({ open, onOpenChange, editing, onCreate, onUpdate }: Props) {
   const [creditor, setCreditor] = useState("")
   const [contract, setContract] = useState("")
-  const [dueDate, setDueDate] = useState("")
+  const [dueDay, setDueDay] = useState("")
   const [totalAmount, setTotalAmount] = useState("")
   const [installmentPlan, setInstallmentPlan] = useState(false)
   const [installmentCount, setInstallmentCount] = useState("")
@@ -43,7 +43,7 @@ export function DebtDialog({ open, onOpenChange, editing, onCreate, onUpdate }: 
     if (open) {
       setCreditor(editing?.creditor ?? "")
       setContract(editing?.contract ?? "")
-      setDueDate(editing?.dueDate ?? "")
+      setDueDay(editing && editing.dueDay ? String(editing.dueDay) : "")
       setTotalAmount(editing ? String(editing.totalAmount) : "")
       setInstallmentPlan(editing?.installmentPlan ?? false)
       setInstallmentCount(editing && editing.installmentCount ? String(editing.installmentCount) : "")
@@ -53,13 +53,15 @@ export function DebtDialog({ open, onOpenChange, editing, onCreate, onUpdate }: 
   const total = Number.parseFloat(totalAmount.replace(",", ".")) || 0
   const count = Number.parseInt(installmentCount, 10) || 0
   const perInstallment = installmentPlan && count > 0 ? total / count : total
+  // Dia do vencimento limitado a 1-31 (0 quando não informado).
+  const day = Math.min(Math.max(Number.parseInt(dueDay, 10) || 0, 0), 31)
 
   function submit() {
     if (!creditor.trim() || total <= 0) return
     const input: DebtInput = {
       creditor: creditor.trim(),
       contract: contract.trim(),
-      dueDate,
+      dueDay: day,
       totalAmount: total,
       installmentPlan,
       installmentCount: installmentPlan ? count : 0,
@@ -116,12 +118,13 @@ export function DebtDialog({ open, onOpenChange, editing, onCreate, onUpdate }: 
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="debt-due">Data de vencimento</Label>
+              <Label htmlFor="debt-due">Dia do vencimento</Label>
               <Input
                 id="debt-due"
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
+                value={dueDay}
+                onChange={(e) => setDueDay(e.target.value.replace(/\D/g, "").slice(0, 2))}
+                placeholder="Ex: 10"
+                inputMode="numeric"
               />
             </div>
           </div>

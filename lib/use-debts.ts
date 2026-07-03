@@ -12,7 +12,7 @@ function uid() {
 // Fields the user provides when creating/editing a debt (computed/derived fields excluded).
 export type DebtInput = Pick<
   Debt,
-  "creditor" | "contract" | "dueDate" | "totalAmount" | "installmentPlan" | "installmentCount"
+  "creditor" | "contract" | "dueDay" | "totalAmount" | "installmentPlan" | "installmentCount"
 >
 
 const seedDebts: Debt[] = [
@@ -20,7 +20,7 @@ const seedDebts: Debt[] = [
     id: uid(),
     creditor: "Banco Itaú",
     contract: "Empréstimo pessoal nº 12345",
-    dueDate: "2026-08-05",
+    dueDay: 5,
     totalAmount: 12000,
     installmentPlan: true,
     installmentCount: 24,
@@ -33,7 +33,7 @@ const seedDebts: Debt[] = [
     id: uid(),
     creditor: "Loja Mais",
     contract: "Cartão - compra de eletrodoméstico",
-    dueDate: "2026-08-10",
+    dueDay: 10,
     totalAmount: 2400,
     installmentPlan: true,
     installmentCount: 12,
@@ -52,11 +52,18 @@ export function useDebts() {
         const parsed = JSON.parse(raw) as Debt[]
         // Normalize: ensure arrays/fields exist on older data.
         setDebts(
-          (parsed ?? []).map((d) => ({
-            ...d,
-            dueDate: d.dueDate ?? "",
-            payments: (d.payments ?? []).map((p) => ({ ...p, note: p.note ?? "" })),
-          })),
+          (parsed ?? []).map((d) => {
+            // Migração: dados antigos usavam `dueDate` (yyyy-mm-dd); extrai só o dia.
+            const legacyDay = (d as { dueDate?: string }).dueDate
+              ? Number((d as { dueDate?: string }).dueDate!.split("-")[2])
+              : 0
+            const { dueDate: _legacy, ...rest } = d as Debt & { dueDate?: string }
+            return {
+              ...rest,
+              dueDay: d.dueDay ?? (Number.isFinite(legacyDay) ? legacyDay : 0),
+              payments: (d.payments ?? []).map((p) => ({ ...p, note: p.note ?? "" })),
+            }
+          }),
         )
       }
     } catch {

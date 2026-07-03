@@ -12,8 +12,9 @@ export interface Debt {
   creditor: string
   // Contrato ou outras informações
   contract: string
-  // Data de vencimento (ISO yyyy-mm-dd) ou vazio quando não informada
-  dueDate: string
+  // Dia do vencimento no mês (1-31). 0 = não informado.
+  // O app avalia o status comparando esse dia com o dia atual do mês.
+  dueDay: number
   // Valor total devido
   totalAmount: number
   // Parcelamento: true = parcelado, false = à vista
@@ -74,13 +75,23 @@ export function daysUntil(fromIso: string, toIso: string): number {
   return Math.round((b.getTime() - a.getTime()) / 86_400_000)
 }
 
-// Situação de vencimento de uma dívida em relação à data atual.
+// Data ISO (yyyy-mm-dd) do vencimento no mês atual, a partir de um dia do mês.
+// O dia é limitado ao último dia do mês (ex.: dia 31 em fevereiro vira 28/29).
+export function currentMonthDueIso(dueDay: number, todayIso: string): string {
+  const [y, m] = todayIso.split("-").map(Number)
+  const lastDay = new Date(y, m, 0).getDate()
+  const day = Math.min(Math.max(dueDay, 1), lastDay)
+  return `${y}-${String(m).padStart(2, "0")}-${String(day).padStart(2, "0")}`
+}
+
+// Situação de vencimento com base apenas no DIA do mês:
+// o app verifica se aquele dia, no mês atual, já passou ou não.
 // "próximo do vencimento" = faltam menos de `soonDays` dias (padrão 5).
-// Dívidas quitadas ou sem data não geram alerta.
+// Dívidas quitadas ou sem dia informado não geram alerta.
 export function debtDueStatus(debt: Debt, todayIso: string, soonDays = 5): DueStatus {
   if (remainingAmount(debt) <= 0) return "ok"
-  if (!debt.dueDate) return "no-date"
-  const diff = daysUntil(todayIso, debt.dueDate)
+  if (!debt.dueDay || debt.dueDay < 1) return "no-date"
+  const diff = daysUntil(todayIso, currentMonthDueIso(debt.dueDay, todayIso))
   if (diff < 0) return "overdue"
   if (diff < soonDays) return "due-soon"
   return "ok"
