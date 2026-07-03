@@ -14,13 +14,14 @@ interface Props {
   targets: Record<Bucket, number>
 }
 
-const BUCKETS: Bucket[] = ["essenciais", "dividas", "pessoal", "investimentos"]
+const BUCKETS: Bucket[] = ["essenciais", "dividas", "pessoal", "investimentos", "outros"]
 
 const BUCKET_COLORS: Record<Bucket, string> = {
   essenciais: "var(--chart-1)",
   dividas: "var(--chart-3)",
   pessoal: "var(--chart-5)",
   investimentos: "var(--chart-2)",
+  outros: "var(--chart-6)",
 }
 
 export function ConsolidatedPanel({ categories, incomes, targets }: Props) {

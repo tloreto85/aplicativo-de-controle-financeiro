@@ -18,6 +18,7 @@ const DEFAULT_TARGETS: Record<Bucket, number> = {
   dividas: 30,
   pessoal: 0,
   investimentos: 20,
+  outros: 0,
 }
 
 // A clean base (no categories/incomes) for a given year.
@@ -75,7 +76,7 @@ const defaultState: FinanceState = {
     { id: uid(), name: "Salário", amount: 7800 },
     { id: uid(), name: "Pró-Labore", amount: 3200 },
   ],
-  targets: { essenciais: 50, dividas: 30, pessoal: 0, investimentos: 20 },
+  targets: { essenciais: 50, dividas: 30, pessoal: 0, investimentos: 20, outros: 0 },
   year: CURRENT_YEAR,
 }
 
@@ -97,7 +98,9 @@ export function useFinance() {
             expenses: (c.expenses ?? []).map((e) => ({ ...e, paid: e.paid ?? false })),
           })),
           incomes: parsed.incomes ?? [],
-          targets: parsed.targets ?? defaultState.targets,
+          // Merge with defaults so newly added buckets (ex.: "outros") existem
+          // mesmo em bases salvas antes dessa opção.
+          targets: { ...DEFAULT_TARGETS, ...(parsed.targets ?? {}) },
           year: storedYear,
         }
 

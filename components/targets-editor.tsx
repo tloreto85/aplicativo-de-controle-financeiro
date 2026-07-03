@@ -11,7 +11,7 @@ interface Props {
   onChange: (targets: Record<Bucket, number>) => void
 }
 
-const BUCKETS: Bucket[] = ["essenciais", "dividas", "pessoal", "investimentos"]
+const BUCKETS: Bucket[] = ["essenciais", "dividas", "pessoal", "investimentos", "outros"]
 
 export function TargetsEditor({ targets, onChange }: Props) {
   const sum = BUCKETS.reduce((s, b) => s + (targets[b] || 0), 0)
