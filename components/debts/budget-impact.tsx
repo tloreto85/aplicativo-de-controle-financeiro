@@ -22,29 +22,42 @@ export function BudgetImpact({ debts, monthlyIncome }: Props) {
   const totalPaid = useMemo(() => debts.reduce((s, d) => s + paidAmount(d), 0), [debts])
 
   // Per-debt monthly commitment (only active debts contribute to the chart).
-  const chartData = useMemo(
-    () =>
-      debts
-        .map((d, i) => {
-          const value = monthlyImpact(d)
-          const open = openInstallments(d)
-          return {
-            name: d.creditor,
-            value,
-            open,
-            // Right-side label combines the monthly value and how many installments remain.
-            label: `${formatBRL(value)} · ${open} ${open === 1 ? "parcela" : "parcelas"} em aberto`,
-            color: BAR_COLORS[i % BAR_COLORS.length],
-          }
-        })
-        .filter((d) => d.value > 0),
-    [debts],
-  )
+  const chartData = useMemo(() => {
+    // Creditors that appear more than once get their contract appended so the
+    // axis label stays unique and readable.
+    const counts = new Map<string, number>()
+    for (const d of debts) counts.set(d.creditor, (counts.get(d.creditor) ?? 0) + 1)
+
+    return debts
+      .map((d, i) => {
+        const value = monthlyImpact(d)
+        const open = openInstallments(d)
+        const duplicated = (counts.get(d.creditor) ?? 0) > 1
+        const name = duplicated && d.contract ? `${d.creditor} — ${d.contract}` : d.creditor
+        return {
+          id: d.id,
+          name,
+          value,
+          open,
+          // Right-side label combines the monthly value and how many installments remain.
+          label: `${formatBRL(value)} · ${open} ${open === 1 ? "parcela" : "parcelas"} em aberto`,
+          color: BAR_COLORS[i % BAR_COLORS.length],
+        }
+      })
+      .filter((d) => d.value > 0)
+  }, [debts])
+
+  // Lookup id -> display name for the axis tick formatter.
+  const nameById = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const d of chartData) map.set(d.id, d.name)
+    return map
+  }, [chartData])
 
   // Y-axis width adapts to the longest creditor name so every label fits.
   const yAxisWidth = useMemo(() => {
     const longest = chartData.reduce((max, d) => Math.max(max, d.name.length), 0)
-    return Math.min(Math.max(longest * 7 + 16, 90), 200)
+    return Math.min(Math.max(longest * 7 + 16, 90), 220)
   }, [chartData])
 
   // Right margin adapts to the longest label so "valor · N parcelas em aberto" fits.
@@ -120,7 +133,8 @@ export function BudgetImpact({ debts, monthlyIncome }: Props) {
                 <XAxis type="number" hide />
                 <YAxis
                   type="category"
-                  dataKey="name"
+                  dataKey="id"
+                  tickFormatter={(id) => nameById.get(id) ?? ""}
                   width={yAxisWidth}
                   tickLine={false}
                   axisLine={false}
@@ -132,7 +146,7 @@ export function BudgetImpact({ debts, monthlyIncome }: Props) {
                 />
                 <Bar dataKey="value" radius={4}>
                   {chartData.map((d) => (
-                    <Cell key={d.name} fill={d.color} />
+                    <Cell key={d.id} fill={d.color} />
                   ))}
                   <LabelList
                     dataKey="label"
