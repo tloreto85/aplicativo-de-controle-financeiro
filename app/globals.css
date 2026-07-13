@@ -24,6 +24,10 @@
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
+  --color-debt-green: var(--debt-green);
+  --color-debt-yellow: var(--debt-yellow);
+  --color-debt-orange: var(--debt-orange);
+  --color-debt-red: var(--debt-red);
   --color-ring: var(--ring);
   --color-total: var(--total);
   --color-total-foreground: var(--total-foreground);
@@ -83,6 +87,11 @@
   --chart-6: oklch(0.62 0.13 190);
   --chart-7: oklch(0.68 0.15 110);
   --chart-8: oklch(0.6 0.16 350);
+  /* Categorias de dívida por valor (semáforo) - mesmas cores em claro/escuro */
+  --debt-green: oklch(0.65 0.16 150);
+  --debt-yellow: oklch(0.8 0.15 90);
+  --debt-orange: oklch(0.7 0.16 55);
+  --debt-red: oklch(0.62 0.22 25);
   --radius: 0.625rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
