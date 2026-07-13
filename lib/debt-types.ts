@@ -66,6 +66,39 @@ export function openInstallments(debt: Debt): number {
   return Math.max(debt.installmentCount - paidInstallments(debt), 0)
 }
 
+// Categoria da dívida pelo VALOR TOTAL (semáforo).
+export type DebtValueCategory = "green" | "yellow" | "orange" | "red"
+
+export interface DebtCategoryInfo {
+  key: DebtValueCategory
+  label: string
+  // Classe utilitária de cor sólida (usa tokens --debt-*)
+  color: string
+  // Faixa de valor descrita para legenda
+  range: string
+}
+
+// Faixas contínuas cobrindo todos os valores:
+// verde: abaixo de R$ 1.000 · amarelo: R$ 1.000 a R$ 1.999
+// laranja: R$ 2.000 a R$ 2.999 · vermelho: R$ 3.000 ou acima
+export function debtValueCategory(total: number): DebtValueCategory {
+  if (total < 1000) return "green"
+  if (total < 2000) return "yellow"
+  if (total < 3000) return "orange"
+  return "red"
+}
+
+export const DEBT_CATEGORY_INFO: Record<DebtValueCategory, DebtCategoryInfo> = {
+  green: { key: "green", label: "Baixa", color: "debt-green", range: "Abaixo de R$ 1.000" },
+  yellow: { key: "yellow", label: "Moderada", color: "debt-yellow", range: "R$ 1.000 a R$ 1.999" },
+  orange: { key: "orange", label: "Alta", color: "debt-orange", range: "R$ 2.000 a R$ 2.999" },
+  red: { key: "red", label: "Crítica", color: "debt-red", range: "R$ 3.000 ou mais" },
+}
+
+export function debtCategoryInfo(debt: Debt): DebtCategoryInfo {
+  return DEBT_CATEGORY_INFO[debtValueCategory(debt.totalAmount)]
+}
+
 export type DueStatus = "overdue" | "due-soon" | "ok" | "no-date"
 
 // Diferença em dias entre duas datas ISO (yyyy-mm-dd).
