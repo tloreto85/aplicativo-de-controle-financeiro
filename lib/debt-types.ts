@@ -1,9 +1,18 @@
-export interface DebtPayment {
+// Uma parcela do cronograma da dívida. É gerada automaticamente a partir do
+// número de parcelas e do dia de vencimento; o usuário marca `paid` para
+// quitá-la, o que subtrai o valor do saldo devedor.
+export interface Installment {
   id: string
+  // Número da parcela (1..N)
+  number: number
+  // Vencimento da parcela (ISO yyyy-mm-dd)
+  dueDate: string
+  // Valor da parcela
   amount: number
-  // ISO date string (yyyy-mm-dd)
-  date: string
-  note: string
+  // Se a parcela foi paga
+  paid: boolean
+  // Data em que foi marcada como paga (ISO yyyy-mm-dd), quando aplicável
+  paidDate?: string
 }
 
 export interface Debt {
@@ -13,7 +22,6 @@ export interface Debt {
   // Contrato ou outras informações
   contract: string
   // Dia do vencimento no mês (1-31). 0 = não informado.
-  // O app avalia o status comparando esse dia com o dia atual do mês.
   dueDay: number
   // Valor total devido
   totalAmount: number
@@ -21,19 +29,76 @@ export interface Debt {
   installmentPlan: boolean
   // Quantidade de parcelas (válido quando installmentPlan = true)
   installmentCount: number
-  // Pagamentos registrados (alimentam saldo devedor e valor pago)
-  payments: DebtPayment[]
+  // Cronograma de parcelas gerado automaticamente
+  installments: Installment[]
+}
+
+// Quantidade efetiva de parcelas: uma dívida à vista é tratada como 1 parcela.
+export function effectiveCount(installmentPlan: boolean, installmentCount: number): number {
+  if (!installmentPlan) return 1
+  return Math.max(Math.round(installmentCount) || 0, 1)
 }
 
 // Valor de cada parcela (total dividido pelo número de parcelas).
 export function installmentValue(debt: Debt): number {
-  if (!debt.installmentPlan || debt.installmentCount <= 0) return debt.totalAmount
-  return debt.totalAmount / debt.installmentCount
+  const n = effectiveCount(debt.installmentPlan, debt.installmentCount)
+  return debt.totalAmount / n
 }
 
-// Soma dos pagamentos já realizados.
+// Último dia de um mês (1-12).
+function lastDayOfMonth(year: number, month1to12: number): number {
+  return new Date(year, month1to12, 0).getDate()
+}
+
+// Gera o cronograma de parcelas: uma parcela por mês, começando no mês de
+// `startIso` (padrão: mês atual), no dia `dueDay` (limitado ao último dia de
+// cada mês). Os valores são arredondados em centavos e o resíduo vai na última
+// parcela, garantindo que a soma feche exatamente com o total.
+export function buildInstallments(
+  opts: {
+    totalAmount: number
+    installmentPlan: boolean
+    installmentCount: number
+    dueDay: number
+  },
+  startIso: string,
+  makeId: () => string,
+): Installment[] {
+  const n = effectiveCount(opts.installmentPlan, opts.installmentCount)
+  if (opts.totalAmount <= 0 || n <= 0) return []
+
+  const [startY, startM] = startIso.split("-").map(Number)
+  const day = Math.min(Math.max(opts.dueDay || 1, 1), 31)
+
+  const perCents = Math.round((opts.totalAmount * 100) / n)
+  const totalCents = Math.round(opts.totalAmount * 100)
+
+  const items: Installment[] = []
+  for (let k = 0; k < n; k++) {
+    // Mês/ano da parcela k (0-indexado a partir do mês inicial).
+    const monthIndex = startM - 1 + k
+    const year = startY + Math.floor(monthIndex / 12)
+    const month = (monthIndex % 12) + 1
+    const dueDay = Math.min(day, lastDayOfMonth(year, month))
+    const dueDate = `${year}-${String(month).padStart(2, "0")}-${String(dueDay).padStart(2, "0")}`
+
+    // Última parcela absorve o resíduo de arredondamento.
+    const cents = k === n - 1 ? totalCents - perCents * (n - 1) : perCents
+
+    items.push({
+      id: makeId(),
+      number: k + 1,
+      dueDate,
+      amount: cents / 100,
+      paid: false,
+    })
+  }
+  return items
+}
+
+// Soma das parcelas já pagas.
 export function paidAmount(debt: Debt): number {
-  return debt.payments.reduce((sum, p) => sum + p.amount, 0)
+  return debt.installments.reduce((sum, i) => sum + (i.paid ? i.amount : 0), 0)
 }
 
 // Saldo devedor = total - pago (nunca negativo).
@@ -41,29 +106,27 @@ export function remainingAmount(debt: Debt): number {
   return Math.max(debt.totalAmount - paidAmount(debt), 0)
 }
 
-// Impacto mensal: o valor de uma parcela enquanto houver saldo devedor.
-// Dívidas quitadas deixam de impactar o orçamento mensal.
-export function monthlyImpact(debt: Debt): number {
-  if (remainingAmount(debt) <= 0) return 0
-  return installmentValue(debt)
-}
-
-// Número estimado de parcelas já pagas (valor pago dividido pelo valor da parcela).
+// Número de parcelas já pagas.
 export function paidInstallments(debt: Debt): number {
-  if (!debt.installmentPlan || debt.installmentCount <= 0) {
-    return remainingAmount(debt) <= 0 ? 1 : 0
-  }
-  const per = installmentValue(debt)
-  if (per <= 0) return 0
-  return Math.min(Math.round(paidAmount(debt) / per), debt.installmentCount)
+  return debt.installments.filter((i) => i.paid).length
 }
 
 // Número de parcelas ainda em aberto.
 export function openInstallments(debt: Debt): number {
-  if (!debt.installmentPlan || debt.installmentCount <= 0) {
-    return remainingAmount(debt) > 0 ? 1 : 0
-  }
-  return Math.max(debt.installmentCount - paidInstallments(debt), 0)
+  return debt.installments.filter((i) => !i.paid).length
+}
+
+// Próxima parcela em aberto (a de menor vencimento ainda não paga).
+export function nextUnpaidInstallment(debt: Debt): Installment | null {
+  const open = debt.installments.filter((i) => !i.paid)
+  if (open.length === 0) return null
+  return open.reduce((earliest, i) => (i.dueDate < earliest.dueDate ? i : earliest))
+}
+
+// Impacto mensal: o valor de uma parcela enquanto houver saldo devedor.
+export function monthlyImpact(debt: Debt): number {
+  if (remainingAmount(debt) <= 0) return 0
+  return installmentValue(debt)
 }
 
 // Categoria da dívida pelo VALOR TOTAL (semáforo).
@@ -108,33 +171,14 @@ export function daysUntil(fromIso: string, toIso: string): number {
   return Math.round((b.getTime() - a.getTime()) / 86_400_000)
 }
 
-// Data ISO (yyyy-mm-dd) do vencimento no mês atual, a partir de um dia do mês.
-// O dia é limitado ao último dia do mês (ex.: dia 31 em fevereiro vira 28/29).
-export function currentMonthDueIso(dueDay: number, todayIso: string): string {
-  const [y, m] = todayIso.split("-").map(Number)
-  const lastDay = new Date(y, m, 0).getDate()
-  const day = Math.min(Math.max(dueDay, 1), lastDay)
-  return `${y}-${String(m).padStart(2, "0")}-${String(day).padStart(2, "0")}`
-}
-
-// Indica se houve algum pagamento registrado no mês corrente (mesmo ano e mês
-// de `todayIso`). Um pagamento no mês quita a parcela daquele mês.
-export function hasPaymentInMonth(debt: Debt, todayIso: string): boolean {
-  const monthPrefix = todayIso.slice(0, 7) // "yyyy-mm"
-  return debt.payments.some((p) => p.date.slice(0, 7) === monthPrefix)
-}
-
-// Situação de vencimento com base apenas no DIA do mês:
-// o app verifica se aquele dia, no mês atual, já passou ou não.
-// "próximo do vencimento" = faltam menos de `soonDays` dias (padrão 5).
-// Dívidas quitadas, sem dia informado ou com a parcela do mês já paga
-// não geram alerta.
+// Situação de vencimento com base na PRÓXIMA parcela em aberto:
+// "overdue" = já passou do vencimento · "due-soon" = faltam menos de
+// `soonDays` dias (padrão 5). Dívidas quitadas retornam "ok".
 export function debtDueStatus(debt: Debt, todayIso: string, soonDays = 5): DueStatus {
   if (remainingAmount(debt) <= 0) return "ok"
-  if (!debt.dueDay || debt.dueDay < 1) return "no-date"
-  // Se a parcela deste mês já foi paga, não há atraso nem vencimento próximo.
-  if (hasPaymentInMonth(debt, todayIso)) return "ok"
-  const diff = daysUntil(todayIso, currentMonthDueIso(debt.dueDay, todayIso))
+  const next = nextUnpaidInstallment(debt)
+  if (!next) return "ok"
+  const diff = daysUntil(todayIso, next.dueDate)
   if (diff < 0) return "overdue"
   if (diff < soonDays) return "due-soon"
   return "ok"
