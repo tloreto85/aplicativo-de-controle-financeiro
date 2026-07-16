@@ -1,13 +1,17 @@
 "use client"
 
-import { useState } from "react"
-import { Pencil, Trash2, Plus, X, CircleCheck, CalendarClock } from "lucide-react"
-import type { Debt, DebtPayment } from "@/lib/debt-types"
-import { installmentValue, paidAmount, remainingAmount, debtDueStatus, debtCategoryInfo } from "@/lib/debt-types"
+import { Pencil, Trash2, Check, CircleCheck, CalendarClock } from "lucide-react"
+import type { Debt, Installment } from "@/lib/debt-types"
+import {
+  installmentValue,
+  paidAmount,
+  remainingAmount,
+  paidInstallments,
+  debtDueStatus,
+  debtCategoryInfo,
+} from "@/lib/debt-types"
 import { formatBRL, formatDateBR } from "@/lib/format"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 
 interface Props {
@@ -15,8 +19,7 @@ interface Props {
   variant?: "grid" | "list"
   onEdit: (debt: Debt) => void
   onRemove: (id: string) => void
-  onAddPayment: (debtId: string, payment: Omit<DebtPayment, "id">) => void
-  onRemovePayment: (debtId: string, paymentId: string) => void
+  onToggleInstallment: (debtId: string, installmentId: string) => void
 }
 
 function today() {
@@ -32,11 +35,7 @@ const CATEGORY_CLASSES: Record<string, { bar: string; badge: string }> = {
   "debt-red": { bar: "border-l-debt-red", badge: "bg-debt-red/15 text-debt-red" },
 }
 
-export function DebtCard({ debt, variant = "grid", onEdit, onRemove, onAddPayment, onRemovePayment }: Props) {
-  const [amount, setAmount] = useState("")
-  const [date, setDate] = useState(today())
-  const [note, setNote] = useState("")
-
+export function DebtCard({ debt, variant = "grid", onEdit, onRemove, onToggleInstallment }: Props) {
   const paid = paidAmount(debt)
   const remaining = remainingAmount(debt)
   const perInstallment = installmentValue(debt)
@@ -47,15 +46,9 @@ export function DebtCard({ debt, variant = "grid", onEdit, onRemove, onAddPaymen
   const isDueSoon = dueStatus === "due-soon"
   const category = debtCategoryInfo(debt)
   const categoryClasses = CATEGORY_CLASSES[category.color]
-
-  function handleAddPayment() {
-    const value = Number.parseFloat(amount.replace(",", "."))
-    if (Number.isNaN(value) || value <= 0) return
-    onAddPayment(debt.id, { amount: value, date: date || today(), note: note.trim() })
-    setAmount("")
-    setNote("")
-    setDate(today())
-  }
+  const todayIso = today()
+  const paidCount = paidInstallments(debt)
+  const totalCount = debt.installments.length
 
   const titleRow = (
     <div className="flex items-start justify-between gap-2">
@@ -88,7 +81,7 @@ export function DebtCard({ debt, variant = "grid", onEdit, onRemove, onAddPaymen
           >
             <CalendarClock className="h-3 w-3" />
             Vence todo dia {debt.dueDay}
-            {!settled && isOverdue && " · vencida este mês"}
+            {!settled && isOverdue && " · parcela em atraso"}
             {!settled && isDueSoon && " · vence em breve"}
           </p>
         )}
@@ -143,78 +136,70 @@ export function DebtCard({ debt, variant = "grid", onEdit, onRemove, onAddPaymen
       {debt.installmentPlan && debt.installmentCount > 0
         ? `Parcelado em ${debt.installmentCount}x de ${formatBRL(perInstallment)}`
         : "Pagamento à vista"}
+      {totalCount > 0 && ` · ${paidCount}/${totalCount} pagas`}
     </p>
   )
 
-  const paymentsList = debt.payments.length > 0 && (
-    <ul className="flex flex-col gap-1 border-t border-border/60 pt-2">
-      {debt.payments.map((p) => (
-        <li key={p.id} className="group flex items-center justify-between gap-2 text-sm">
-          <span className="flex items-center gap-2 text-muted-foreground">
-            <span className="text-xs tabular-nums">{formatDateBR(p.date)}</span>
-            {p.note && <span className="truncate text-card-foreground">{p.note}</span>}
-          </span>
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-card-foreground">{formatBRL(p.amount)}</span>
-            <button
-              type="button"
-              onClick={() => onRemovePayment(debt.id, p.id)}
-              className="rounded p-0.5 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
-              aria-label="Remover pagamento"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        </li>
-      ))}
-    </ul>
-  )
-
-  const paymentForm = (
-    <div className="flex flex-col gap-1.5 border-t border-border/60 pt-3">
-      <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-        Registrar pagamento
-      </span>
-      <div className="flex items-center gap-1.5">
-        <Input
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          placeholder="0,00"
-          inputMode="decimal"
-          className="h-8 w-24 text-sm"
-          onKeyDown={(e) => e.key === "Enter" && handleAddPayment()}
-          aria-label="Valor do pagamento"
-        />
-        <Input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          className="h-8 w-36 text-sm"
-          aria-label="Data do pagamento"
-        />
-        <Input
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          placeholder="Obs."
-          className="h-8 flex-1 text-sm"
-          onKeyDown={(e) => e.key === "Enter" && handleAddPayment()}
-          aria-label="Observação do pagamento"
-        />
-        <Button
-          size="icon"
-          className="h-8 w-8 shrink-0"
-          onClick={handleAddPayment}
-          aria-label="Adicionar pagamento"
-          disabled={settled}
+  // Uma linha da parcela: checkbox de "paga", número, vencimento e valor.
+  function InstallmentRow({ inst }: { inst: Installment }) {
+    const overdue = !inst.paid && inst.dueDate < todayIso
+    return (
+      <li className="flex items-center gap-2.5 py-1.5">
+        <button
+          type="button"
+          role="checkbox"
+          aria-checked={inst.paid}
+          onClick={() => onToggleInstallment(debt.id, inst.id)}
+          aria-label={`Marcar parcela ${inst.number} como ${inst.paid ? "não paga" : "paga"}`}
+          className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors ${
+            inst.paid
+              ? "border-primary bg-primary text-primary-foreground"
+              : "border-input bg-background hover:border-primary"
+          }`}
         >
-          <Plus className="h-4 w-4" />
-        </Button>
-      </div>
+          {inst.paid && <Check className="h-3.5 w-3.5" />}
+        </button>
+        <span
+          className={`w-14 shrink-0 text-xs font-medium ${
+            inst.paid ? "text-muted-foreground" : "text-card-foreground"
+          }`}
+        >
+          {inst.number}/{totalCount}
+        </span>
+        <span
+          className={`flex-1 text-xs tabular-nums ${
+            overdue ? "font-medium text-destructive" : "text-muted-foreground"
+          }`}
+        >
+          {formatDateBR(inst.dueDate)}
+          {overdue && " · em atraso"}
+        </span>
+        <span
+          className={`font-mono text-sm ${
+            inst.paid ? "text-muted-foreground line-through" : "text-card-foreground"
+          }`}
+        >
+          {formatBRL(inst.amount)}
+        </span>
+      </li>
+    )
+  }
+
+  const installmentsList = totalCount > 0 && (
+    <div className="border-t border-border/60 pt-2">
+      <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        Parcelas — marque as pagas
+      </span>
+      <ul className="mt-1 flex max-h-64 flex-col divide-y divide-border/40 overflow-y-auto pr-1">
+        {debt.installments.map((inst) => (
+          <InstallmentRow key={inst.id} inst={inst} />
+        ))}
+      </ul>
     </div>
   )
 
   // Formato LISTA: cabeçalho e valores lado a lado em telas largas;
-  // pagamentos e formulário ocupam a largura total abaixo.
+  // as parcelas ocupam a largura total abaixo.
   if (variant === "list") {
     return (
       <Card className={`border-l-4 ${categoryClasses.bar}`}>
@@ -229,8 +214,7 @@ export function DebtCard({ debt, variant = "grid", onEdit, onRemove, onAddPaymen
               {progressRow}
             </div>
           </div>
-          {paymentsList}
-          {paymentForm}
+          {installmentsList}
         </CardContent>
       </Card>
     )
@@ -246,8 +230,7 @@ export function DebtCard({ debt, variant = "grid", onEdit, onRemove, onAddPaymen
       <CardContent className="flex flex-1 flex-col gap-3">
         {stats}
         {installmentText}
-        {paymentsList}
-        <div className="mt-auto">{paymentForm}</div>
+        {installmentsList}
       </CardContent>
     </Card>
   )

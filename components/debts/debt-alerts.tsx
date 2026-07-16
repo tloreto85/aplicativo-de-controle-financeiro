@@ -4,7 +4,7 @@ import { useMemo } from "react"
 import Link from "next/link"
 import { AlertTriangle, Clock, CheckCircle2, ArrowRight } from "lucide-react"
 import { useDebts } from "@/lib/use-debts"
-import { debtDueStatus, daysUntil, currentMonthDueIso } from "@/lib/debt-types"
+import { debtDueStatus, daysUntil, nextUnpaidInstallment } from "@/lib/debt-types"
 import type { Debt } from "@/lib/debt-types"
 
 function today() {
@@ -61,8 +61,9 @@ export function DebtAlerts() {
             <p className="mt-0.5 text-sm">
               {dueSoon
                 .map((d) => {
-                  const days = daysUntil(todayIso, currentMonthDueIso(d.dueDay, todayIso))
-                  const quando = days === 0 ? "vence hoje" : days === 1 ? "vence amanhã" : `faltam ${days} dias`
+                  const next = nextUnpaidInstallment(d)
+                  const days = next ? daysUntil(todayIso, next.dueDate) : 0
+                  const quando = days <= 0 ? "vence hoje" : days === 1 ? "vence amanhã" : `faltam ${days} dias`
                   return `${d.creditor} (dia ${d.dueDay} · ${quando})`
                 })
                 .join(" · ")}

@@ -23,7 +23,7 @@ const CATEGORY_DOT: Record<string, string> = {
 }
 
 export default function DividasPage() {
-  const { debts, loaded, addDebt, updateDebt, removeDebt, addPayment, removePayment } = useDebts()
+  const { debts, loaded, addDebt, updateDebt, removeDebt, toggleInstallment } = useDebts()
   const { state, loaded: financeLoaded } = useFinance()
 
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -191,8 +191,7 @@ export default function DividasPage() {
                           variant={view}
                           onEdit={openEdit}
                           onRemove={removeDebt}
-                          onAddPayment={addPayment}
-                          onRemovePayment={removePayment}
+                          onToggleInstallment={toggleInstallment}
                         />
                       ))}
                     </div>
