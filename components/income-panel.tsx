@@ -10,11 +10,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 interface Props {
   incomes: Income[]
+  // Rótulo do período ativo (ex.: "Julho 2026" ou "Todos os meses").
+  periodLabel?: string
   onAdd: (name: string, amount: number) => void
   onRemove: (id: string) => void
 }
 
-export function IncomePanel({ incomes, onAdd, onRemove }: Props) {
+export function IncomePanel({ incomes, periodLabel, onAdd, onRemove }: Props) {
   const [name, setName] = useState("")
   const [amount, setAmount] = useState("")
   const total = incomes.reduce((sum, i) => sum + i.amount, 0)
@@ -30,9 +32,19 @@ export function IncomePanel({ incomes, onAdd, onRemove }: Props) {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-base">Receitas</CardTitle>
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="text-base">Receitas</CardTitle>
+          {periodLabel && (
+            <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium capitalize text-muted-foreground">
+              {periodLabel}
+            </span>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
+        {incomes.length === 0 && (
+          <p className="py-2 text-sm text-muted-foreground">Nenhuma receita neste mês.</p>
+        )}
         <ul className="flex flex-col">
           {incomes.map((i) => (
             <li key={i.id} className="group flex items-center justify-between border-b border-border/60 py-1.5 text-sm">

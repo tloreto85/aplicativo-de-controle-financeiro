@@ -4,7 +4,7 @@ import { useMemo } from "react"
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import { TrendingUp, TrendingDown, Wallet, CalendarCheck } from "lucide-react"
 import type { Category, Income } from "@/lib/types"
-import { formatBRL, monthKey, monthLabel } from "@/lib/format"
+import { formatBRL, monthKey, monthLabel, currentMonthKey } from "@/lib/format"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import {
@@ -28,44 +28,47 @@ const chartConfig: ChartConfig = {
   despesa: { label: "Despesa", color: "var(--chart-3)" },
 }
 
-// Chave "yyyy-mm" do mês corrente. Meses finalizados são os anteriores a este.
-function currentMonthKey(): string {
-  const now = new Date()
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
-}
-
 export function MonthlyConsolidation({ categories, incomes }: Props) {
-  // Receita mensal recorrente (as receitas não têm data; valem para cada mês).
-  const monthlyIncome = useMemo(() => incomes.reduce((sum, i) => sum + i.amount, 0), [incomes])
-
+  // Meses finalizados são os anteriores ao mês corrente.
   const todayKey = currentMonthKey()
 
-  // Agrupa as despesas com data por mês, considerando apenas meses já finalizados.
+  // Agrupa despesas e receitas por mês, considerando apenas meses finalizados.
+  // A receita de cada mês é a soma das receitas vinculadas àquele mês.
   const months = useMemo(() => {
     const map = new Map<
       string,
-      { key: string; despesa: number; byCategory: Record<string, number> }
+      { key: string; despesa: number; receita: number; byCategory: Record<string, number> }
     >()
+
+    const ensure = (key: string) =>
+      map.get(key) ?? { key, despesa: 0, receita: 0, byCategory: {} }
 
     for (const c of categories) {
       for (const e of c.expenses) {
         const key = monthKey(e.date)
         if (!key || key >= todayKey) continue // ignora sem data e meses não finalizados
-        const entry = map.get(key) ?? { key, despesa: 0, byCategory: {} }
+        const entry = ensure(key)
         entry.despesa += e.amount
         entry.byCategory[c.id] = (entry.byCategory[c.id] ?? 0) + e.amount
         map.set(key, entry)
       }
     }
 
+    for (const i of incomes) {
+      if (!i.month || i.month >= todayKey) continue // só meses finalizados
+      const entry = ensure(i.month)
+      entry.receita += i.amount
+      map.set(i.month, entry)
+    }
+
     return Array.from(map.values())
       .sort((a, b) => a.key.localeCompare(b.key))
-      .map((m) => ({ ...m, receita: monthlyIncome, saldo: monthlyIncome - m.despesa }))
-  }, [categories, monthlyIncome, todayKey])
+      .map((m) => ({ ...m, saldo: m.receita - m.despesa }))
+  }, [categories, incomes, todayKey])
 
   // Totais gerais ao longo de todos os meses finalizados.
   const totals = useMemo(() => {
-    const receita = monthlyIncome * months.length
+    const receita = months.reduce((s, m) => s + m.receita, 0)
     const despesa = months.reduce((s, m) => s + m.despesa, 0)
     const byCategory: Record<string, number> = {}
     for (const m of months) {
@@ -74,7 +77,7 @@ export function MonthlyConsolidation({ categories, incomes }: Props) {
       }
     }
     return { receita, despesa, saldo: receita - despesa, byCategory }
-  }, [months, monthlyIncome])
+  }, [months])
 
   const chartData = useMemo(
     () =>

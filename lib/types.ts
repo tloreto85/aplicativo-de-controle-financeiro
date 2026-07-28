@@ -25,6 +25,9 @@ export interface Income {
   id: string
   name: string
   amount: number
+  // "yyyy-mm" — mês ao qual a receita pertence. Receitas valem apenas para o
+  // seu mês; ao mudar de mês, o novo mês começa sem receitas.
+  month: string
 }
 
 export interface FinanceState {
