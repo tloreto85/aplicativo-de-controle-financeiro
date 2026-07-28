@@ -36,6 +36,12 @@ export function monthKey(iso: string): string {
   return `${y}-${m}`
 }
 
+// "yyyy-mm" key for the current calendar month.
+export function currentMonthKey(): string {
+  const now = new Date()
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
+}
+
 // Human label for a "yyyy-mm" key, e.g. "Julho 2026".
 export function monthLabel(key: string): string {
   const [y, m] = key.split("-").map(Number)

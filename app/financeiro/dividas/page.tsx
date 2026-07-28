@@ -7,7 +7,7 @@ import { useDebts } from "@/lib/use-debts"
 import { useFinance } from "@/lib/use-finance"
 import type { Debt } from "@/lib/debt-types"
 import { remainingAmount, DEBT_CATEGORY_INFO } from "@/lib/debt-types"
-import { formatBRL } from "@/lib/format"
+import { formatBRL, currentMonthKey } from "@/lib/format"
 import { Button } from "@/components/ui/button"
 import { DebtCard } from "@/components/debts/debt-card"
 import { DebtDialog } from "@/components/debts/debt-dialog"
@@ -30,10 +30,11 @@ export default function DividasPage() {
   const [editing, setEditing] = useState<Debt | null>(null)
   const [view, setView] = useState<ViewMode>("grid")
 
-  const monthlyIncome = useMemo(
-    () => state.incomes.reduce((sum, i) => sum + i.amount, 0),
-    [state.incomes],
-  )
+  // Renda usada na análise de impacto: receitas do mês corrente.
+  const monthlyIncome = useMemo(() => {
+    const key = currentMonthKey()
+    return state.incomes.filter((i) => i.month === key).reduce((sum, i) => sum + i.amount, 0)
+  }, [state.incomes])
 
   const totalRemaining = useMemo(
     () => debts.reduce((sum, d) => sum + remainingAmount(d), 0),

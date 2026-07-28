@@ -3,10 +3,12 @@
 import { useCallback, useEffect, useState } from "react"
 import type { Bucket, Category, Expense, FinanceState, Income } from "./types"
 import { buildExpensesCsv, downloadCsv } from "./export"
+import { currentMonthKey } from "./format"
 
 const STORAGE_KEY = "controle-financeiro-v1"
 
 const CURRENT_YEAR = new Date().getFullYear()
+const CURRENT_MONTH = currentMonthKey()
 
 function uid() {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36)
@@ -73,8 +75,8 @@ const defaultState: FinanceState = {
     },
   ],
   incomes: [
-    { id: uid(), name: "Salário", amount: 7800 },
-    { id: uid(), name: "Pró-Labore", amount: 3200 },
+    { id: uid(), name: "Salário", amount: 7800, month: CURRENT_MONTH },
+    { id: uid(), name: "Pró-Labore", amount: 3200, month: CURRENT_MONTH },
   ],
   targets: { essenciais: 50, dividas: 30, pessoal: 0, investimentos: 20, outros: 0 },
   year: CURRENT_YEAR,
@@ -97,7 +99,9 @@ export function useFinance() {
             ...c,
             expenses: (c.expenses ?? []).map((e) => ({ ...e, paid: e.paid ?? false })),
           })),
-          incomes: parsed.incomes ?? [],
+          // Receitas de bases antigas não tinham mês: atribui ao mês atual para
+          // não perder o dado (a partir daqui cada receita vive no seu mês).
+          incomes: (parsed.incomes ?? []).map((i) => ({ ...i, month: i.month ?? CURRENT_MONTH })),
           // Merge with defaults so newly added buckets (ex.: "outros") existem
           // mesmo em bases salvas antes dessa opção.
           targets: { ...DEFAULT_TARGETS, ...(parsed.targets ?? {}) },
@@ -180,8 +184,8 @@ export function useFinance() {
     }))
   }, [])
 
-  const addIncome = useCallback((name: string, amount: number) => {
-    setState((s) => ({ ...s, incomes: [...s.incomes, { id: uid(), name, amount }] }))
+  const addIncome = useCallback((name: string, amount: number, month: string) => {
+    setState((s) => ({ ...s, incomes: [...s.incomes, { id: uid(), name, amount, month }] }))
   }, [])
 
   const updateIncome = useCallback((id: string, patch: Partial<Omit<Income, "id">>) => {

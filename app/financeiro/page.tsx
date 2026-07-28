@@ -5,7 +5,7 @@ import Link from "next/link"
 import { ArrowLeft, Plus, Wallet, Landmark } from "lucide-react"
 import { useFinance } from "@/lib/use-finance"
 import type { Category } from "@/lib/types"
-import { formatBRL, monthKey } from "@/lib/format"
+import { formatBRL, monthKey, monthLabel, currentMonthKey } from "@/lib/format"
 import { buildExpensesCsv, downloadCsv } from "@/lib/export"
 import { Button } from "@/components/ui/button"
 import { CategoryCard } from "@/components/category-card"
@@ -50,13 +50,23 @@ export default function FinanceiroPage() {
     }))
   }, [state.categories, selectedMonth])
 
+  // Receitas vinculadas ao mês selecionado. Em "Todos os meses" mostra todas.
+  const filteredIncomes = useMemo(() => {
+    if (selectedMonth === ALL_MONTHS) return state.incomes
+    return state.incomes.filter((i) => i.month === selectedMonth)
+  }, [state.incomes, selectedMonth])
+
+  // Ao adicionar em "Todos os meses", a receita entra no mês corrente.
+  const incomeMonth = selectedMonth === ALL_MONTHS ? currentMonthKey() : selectedMonth
+  const incomePeriodLabel = selectedMonth === ALL_MONTHS ? "Todos os meses" : monthLabel(selectedMonth)
+
   // Saldo considera apenas despesas efetivamente PAGAS; despesas em aberto
   // (não pagas) não impactam o saldo até serem quitadas.
   const totalPaidExpenses = filteredCategories.reduce(
     (sum, c) => sum + c.expenses.filter((e) => e.paid).reduce((s, e) => s + e.amount, 0),
     0,
   )
-  const totalIncome = state.incomes.reduce((sum, i) => sum + i.amount, 0)
+  const totalIncome = filteredIncomes.reduce((sum, i) => sum + i.amount, 0)
 
   function openNew() {
     setEditing(null)
@@ -171,7 +181,12 @@ export default function FinanceiroPage() {
         </section>
 
         <section className="grid gap-4 lg:grid-cols-2">
-          <IncomePanel incomes={state.incomes} onAdd={addIncome} onRemove={removeIncome} />
+          <IncomePanel
+            incomes={filteredIncomes}
+            periodLabel={incomePeriodLabel}
+            onAdd={(name, amount) => addIncome(name, amount, incomeMonth)}
+            onRemove={removeIncome}
+          />
           <TargetsEditor targets={state.targets} onChange={updateTargets} />
         </section>
 
@@ -180,7 +195,7 @@ export default function FinanceiroPage() {
         </section>
 
         <section>
-          <ConsolidatedPanel categories={filteredCategories} incomes={state.incomes} targets={state.targets} />
+          <ConsolidatedPanel categories={filteredCategories} incomes={filteredIncomes} targets={state.targets} />
         </section>
       </div>
 
