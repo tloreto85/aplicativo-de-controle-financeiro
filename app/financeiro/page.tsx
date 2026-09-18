@@ -39,7 +39,8 @@ export default function FinanceiroPage() {
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<Category | null>(null)
-  const [selectedMonth, setSelectedMonth] = useState<string>(ALL_MONTHS)
+  // Ao abrir a tela, o mês corrente já vem selecionado (evita ter que clicar).
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => currentMonthKey())
 
   // Categories with expenses filtered by the selected month (mutations still use ids).
   const filteredCategories = useMemo(() => {
