@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ShoppingCart, Wallet, ArrowRight, Landmark } from "lucide-react"
+import { ShoppingCart, Wallet, ArrowRight, Landmark, CalendarDays } from "lucide-react"
 import { DebtAlerts } from "@/components/debts/debt-alerts"
 
 const options = [
@@ -20,6 +20,12 @@ const options = [
     title: "Gestão de Dívidas",
     description: "Cadastre dívidas, registre pagamentos e acompanhe o impacto no orçamento mensal.",
     icon: Landmark,
+  },
+  {
+    href: "/calendario",
+    title: "Calendário",
+    description: "Visualize receitas, despesas e vencimentos por dia e cadastre eventos próprios.",
+    icon: CalendarDays,
   },
 ]
 
