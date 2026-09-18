@@ -11,7 +11,7 @@ O app é organizado em módulos acessíveis pelo menu inicial:
 - **Controle Financeiro** — orçamento mensal por categoria, receitas, metas e consolidado 50-30-20.
 - **Gestão de Dívidas** — cadastro de dívidas parceladas, registro de pagamentos e análise de impacto na renda.
 - **Consolidado Anual** — visão de todas as receitas e despesas do ano, com filtros de categoria e gráficos.
-- **Calendário** — visão mensal estilo agenda que reúne receitas, despesas, vencimentos de dívidas e eventos próprios.
+- **Calendário** — visão mensal estilo agenda que reúne receitas e despesas do Controle Financeiro e eventos próprios.
 
 ## Funcionalidades
 
@@ -45,7 +45,7 @@ O app é organizado em módulos acessíveis pelo menu inicial:
 ### Calendário
 
 - **Visão mensal** estilo Google Agenda, com destaque para o dia atual e navegação entre meses.
-- **Lançamentos por dia** vindos de três origens, com cores distintas: receitas (verde) e despesas (vermelho) do Controle Financeiro, parcelas da Gestão de Dívidas (roxo, pelo vencimento) e eventos próprios (azul).
+- **Lançamentos por dia** do Controle Financeiro, com cores distintas: receitas (verde), despesas (vermelho) e eventos próprios (azul). A Gestão de Dívidas é mantida separada e não aparece aqui.
 - **Resumo do mês** com receitas, despesas e saldo previsto.
 - **Eventos próprios** — cadastre, edite e exclua lançamentos direto no dia (receita, despesa ou evento).
 
@@ -179,7 +179,7 @@ lib/
   use-debts.ts                  # Estado das dívidas + persistência local
   calendar-types.ts             # Tipos dos eventos do calendário
   use-calendar-events.ts        # Estado dos eventos próprios + persistência local
-  calendar-utils.ts             # Agregação das origens e montagem da grade
+  calendar-utils.ts             # Agregação do Controle Financeiro e montagem da grade
   format.ts                     # Formatação de moeda e datas
   export.ts                     # Geração do arquivo CSV
 ```
