@@ -1,20 +1,53 @@
 # Controle Financeiro
 
-Sistema de controle financeiro pessoal inspirado em planilhas de orçamento doméstico, com lançamento de despesas por categoria, datas, totais automáticos e painel consolidado baseado na regra **50-30-20**.
+Sistema de controle financeiro pessoal inspirado em planilhas de orçamento doméstico. Reúne o **Controle Financeiro** (despesas por categoria e regra **50-30-20**), a **Gestão de Dívidas** (parcelamentos e impacto no orçamento) e um **Calendário** visual que consolida todos os lançamentos por dia.
 
 Os dados são salvos automaticamente no **navegador (localStorage)** — não há servidor nem login. Cada navegador/dispositivo mantém seus próprios dados.
 
+## Módulos
+
+O app é organizado em módulos acessíveis pelo menu inicial:
+
+- **Controle Financeiro** — orçamento mensal por categoria, receitas, metas e consolidado 50-30-20.
+- **Gestão de Dívidas** — cadastro de dívidas parceladas, registro de pagamentos e análise de impacto na renda.
+- **Consolidado Anual** — visão de todas as receitas e despesas do ano, com filtros de categoria e gráficos.
+- **Calendário** — visão mensal estilo agenda que reúne receitas, despesas, vencimentos de dívidas e eventos próprios.
+
 ## Funcionalidades
+
+### Controle Financeiro
 
 - **Despesas por categoria** — cada categoria tem cabeçalho colorido, itens com descrição, valor (R$) e data, além de total automático.
 - **Categorias editáveis** — crie, renomeie, troque a cor e o grupo (Essenciais, Dívidas/Cartões, Pessoal, Investimentos), ou exclua categorias.
-- **Receitas e metas** — cadastre fontes de renda e ajuste os percentuais da regra 50-30-20.
+- **Receitas por mês** — cada receita pertence ao mês em que foi cadastrada. Ao trocar de mês, o novo período começa sem receitas, em vez de repetir os valores do mês anterior.
+- **Metas 50-30-20** — ajuste os percentuais de cada grupo da regra.
 - **Painel consolidado** — compara o valor *Estimado* x *Realizado* por grupo, com status (Ok / Acima), percentual de uso e o saldo final (*Diff*).
-- **Filtro por mês** — visualize apenas as despesas de um período específico; todos os totais, gráficos e o consolidado recalculam automaticamente.
+- **Mês atual pré-selecionado** — ao abrir a tela, o mês corrente já vem selecionado; use o seletor de período para navegar entre os meses.
 - **Exportação CSV/Excel** — baixe os lançamentos do período filtrado em um arquivo `.csv` pronto para abrir no Excel (pt-BR).
 - **Gráfico de distribuição** — donut com a participação percentual de cada categoria no total de despesas.
 - **Limpar todos os dados** — botão no topo (com confirmação) que zera categorias, despesas e receitas a qualquer momento, voltando as metas ao padrão.
 - **Virada de ano automática** — ao abrir o app em um ano novo, os dados do ano anterior são exportados automaticamente em um arquivo Excel/CSV e uma base em branco é criada para o novo ano, com um aviso explicando o que aconteceu.
+
+### Gestão de Dívidas
+
+- **Cadastro de dívidas** — registre dívidas com valor total, número de parcelas, valor da parcela e data de vencimento.
+- **Registro de pagamentos** — marque parcelas como pagas e acompanhe o saldo devedor.
+- **Análise de impacto** — veja o quanto as parcelas comprometem da renda do mês corrente.
+
+### Consolidado Anual
+
+- **Resumo do ano** — cartões com receita, despesa e saldo totais do ano.
+- **Filtro por categoria** — chips coloridos que recalculam despesas, gráficos e resumo em tempo real.
+- **Receita × despesa por mês** — gráfico de barras com os 12 meses do ano.
+- **Distribuição por categoria** — gráfico de pizza e ranking com barras e percentuais.
+- **Detalhamento mês a mês** — receitas, despesas e saldo de cada mês com lançamentos.
+
+### Calendário
+
+- **Visão mensal** estilo Google Agenda, com destaque para o dia atual e navegação entre meses.
+- **Lançamentos por dia** vindos de três origens, com cores distintas: receitas (verde) e despesas (vermelho) do Controle Financeiro, parcelas da Gestão de Dívidas (roxo, pelo vencimento) e eventos próprios (azul).
+- **Resumo do mês** com receitas, despesas e saldo previsto.
+- **Eventos próprios** — cadastre, edite e exclua lançamentos direto no dia (receita, despesa ou evento).
 
 ## Tecnologias
 
@@ -116,21 +149,37 @@ Ao abrir o aplicativo já em um novo ano (ex: a primeira vez que você acessar e
 
 ```
 app/
-  layout.tsx          # Layout raiz, fontes e metadata
-  page.tsx            # Página principal que monta o dashboard
-  globals.css         # Tema (cores, tokens) e Tailwind
+  layout.tsx                    # Layout raiz, fontes e metadata
+  page.tsx                      # Menu inicial com os módulos
+  globals.css                   # Tema (cores, tokens) e Tailwind
+  financeiro/
+    page.tsx                    # Controle Financeiro (dashboard mensal)
+    consolidado/page.tsx        # Consolidado Anual
+    dividas/page.tsx            # Gestão de Dívidas
+  calendario/
+    page.tsx                    # Calendário mensal
 components/
-  category-card.tsx       # Card de uma categoria com seus itens
-  category-dialog.tsx     # Diálogo de criar/editar categoria
-  consolidated-panel.tsx  # Painel da regra 50-30-20
-  distribution-chart.tsx  # Gráfico de pizza/donut
-  filter-bar.tsx          # Filtro por mês + exportar CSV
-  income-panel.tsx        # Cadastro de receitas
-  targets-editor.tsx      # Ajuste dos percentuais das metas
-  ui/                     # Componentes shadcn/ui
+  category-card.tsx             # Card de uma categoria com seus itens
+  category-dialog.tsx           # Diálogo de criar/editar categoria
+  consolidated-panel.tsx        # Painel da regra 50-30-20
+  annual-consolidation.tsx      # Consolidado anual com filtros e gráficos
+  distribution-chart.tsx        # Gráfico de pizza/donut
+  filter-bar.tsx                # Filtro por mês + exportar CSV
+  income-panel.tsx              # Cadastro de receitas do mês
+  targets-editor.tsx            # Ajuste dos percentuais das metas
+  debts/                        # Componentes da Gestão de Dívidas
+  calendar/
+    calendar-grid.tsx           # Grade mensal do calendário
+    day-dialog.tsx              # Detalhe e eventos de um dia
+  ui/                           # Componentes shadcn/ui
 lib/
-  types.ts            # Tipos do domínio (categorias, despesas, etc.)
-  use-finance.ts      # Estado da aplicação + persistência local
-  format.ts           # Formatação de moeda e datas
-  export.ts           # Geração do arquivo CSV
+  types.ts                      # Tipos do domínio (categorias, despesas, receitas)
+  use-finance.ts                # Estado do Controle Financeiro + persistência local
+  debt-types.ts                 # Tipos da Gestão de Dívidas
+  use-debts.ts                  # Estado das dívidas + persistência local
+  calendar-types.ts             # Tipos dos eventos do calendário
+  use-calendar-events.ts        # Estado dos eventos próprios + persistência local
+  calendar-utils.ts             # Agregação das origens e montagem da grade
+  format.ts                     # Formatação de moeda e datas
+  export.ts                     # Geração do arquivo CSV
 ```
