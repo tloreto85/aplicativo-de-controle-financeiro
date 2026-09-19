@@ -1,14 +1,14 @@
 // Tipos do módulo Calendário.
 //
-// O calendário agrega lançamentos de três origens:
+// O calendário agrega lançamentos de duas origens:
 // - "financeiro": despesas (com data) e receitas do Controle Financeiro
-// - "dividas": parcelas da Gestão de Dívidas (pelo vencimento)
 // - "calendario": eventos cadastrados diretamente na tela do Calendário
 //
+// A Gestão de Dívidas é um módulo separado e não alimenta o calendário.
 // Cada lançamento vira uma `CalendarEntry` para renderização unificada.
 
-export type EventKind = "receita" | "despesa" | "divida" | "evento"
-export type EventSource = "financeiro" | "dividas" | "calendario"
+export type EventKind = "receita" | "despesa" | "evento"
+export type EventSource = "financeiro" | "calendario"
 
 // Evento cadastrado na própria tela do Calendário (persistido em localStorage).
 export interface CalendarEvent {
@@ -39,7 +39,6 @@ export interface CalendarEntry {
 export const KIND_META: Record<EventKind, { label: string; color: string }> = {
   receita: { label: "Receita", color: "var(--chart-1)" },
   despesa: { label: "Despesa", color: "var(--chart-4)" },
-  divida: { label: "Dívida", color: "var(--chart-8)" },
   evento: { label: "Evento", color: "var(--chart-2)" },
 }
 

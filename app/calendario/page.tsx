@@ -4,7 +4,6 @@ import { useMemo, useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, CalendarDays, ChevronLeft, ChevronRight } from "lucide-react"
 import { useFinance } from "@/lib/use-finance"
-import { useDebts } from "@/lib/use-debts"
 import { useCalendarEvents } from "@/lib/use-calendar-events"
 import { KIND_META } from "@/lib/calendar-types"
 import {
@@ -21,7 +20,6 @@ import { DayDialog } from "@/components/calendar/day-dialog"
 
 export default function CalendarioPage() {
   const finance = useFinance()
-  const { debts, loaded: debtsLoaded } = useDebts()
   const { events, loaded: eventsLoaded, addEvent, updateEvent, removeEvent } = useCalendarEvents()
 
   const today = todayIso()
@@ -29,12 +27,12 @@ export default function CalendarioPage() {
   const [cursor, setCursor] = useState(() => ({ year: now.getFullYear(), month0: now.getMonth() }))
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
 
-  const loaded = finance.loaded && debtsLoaded && eventsLoaded
+  const loaded = finance.loaded && eventsLoaded
 
-  // Lançamentos unificados das três origens.
+  // Lançamentos unificados: Controle Financeiro + eventos próprios.
   const entries = useMemo(
-    () => buildEntries(finance.state, debts, events),
-    [finance.state, debts, events],
+    () => buildEntries(finance.state, events),
+    [finance.state, events],
   )
   const entriesByDate = useMemo(() => groupByDate(entries), [entries])
 
@@ -93,7 +91,7 @@ export default function CalendarioPage() {
             <div>
               <h1 className="text-lg font-bold leading-tight text-card-foreground">Calendário</h1>
               <p className="text-sm text-muted-foreground">
-                Receitas, despesas e vencimentos em um só lugar
+                Receitas e despesas do Controle Financeiro em um só lugar
               </p>
             </div>
           </div>
@@ -145,7 +143,7 @@ export default function CalendarioPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-            {(["receita", "despesa", "divida", "evento"] as const).map((k) => (
+            {(["receita", "despesa", "evento"] as const).map((k) => (
               <span key={k} className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <span
                   className="h-2.5 w-2.5 rounded-full"
@@ -161,7 +159,7 @@ export default function CalendarioPage() {
 
         <p className="text-xs text-muted-foreground">
           Toque em um dia para ver os lançamentos e adicionar eventos próprios. Receitas do mês
-          aparecem no dia 1º; despesas e parcelas aparecem na data de vencimento.
+          aparecem no dia 1º; despesas aparecem na data informada.
         </p>
       </div>
 

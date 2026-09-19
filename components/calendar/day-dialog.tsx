@@ -35,7 +35,6 @@ interface Props {
 
 const SOURCE_LABEL: Record<string, string> = {
   financeiro: "Controle Financeiro",
-  dividas: "Gestão de Dívidas",
   calendario: "Calendário",
 }
 
@@ -100,7 +99,7 @@ export function DayDialog({ date, entries, onOpenChange, onAdd, onUpdate, onRemo
         <DialogHeader>
           <DialogTitle className="capitalize">{date ? formatDateBR(date) : ""}</DialogTitle>
           <DialogDescription>
-            Lançamentos do dia vindos do Controle Financeiro, Dívidas e do próprio Calendário.
+            Lançamentos do dia vindos do Controle Financeiro e do próprio Calendário.
           </DialogDescription>
         </DialogHeader>
 

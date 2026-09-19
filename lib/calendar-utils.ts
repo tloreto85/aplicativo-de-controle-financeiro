@@ -1,7 +1,5 @@
 import type { FinanceState } from "./types"
-import type { Debt } from "./debt-types"
 import type { CalendarEntry, CalendarEvent } from "./calendar-types"
-import { effectiveCount } from "./debt-types"
 
 // Nomes dos dias da semana (domingo primeiro, como o Google Agenda).
 export const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"]
@@ -47,11 +45,11 @@ export function buildMonthGrid(year: number, month0: number, today: string): Day
   return cells
 }
 
-// Agrega despesas (com data), receitas, parcelas de dívidas e eventos próprios
-// em uma lista unificada de lançamentos do calendário.
+// Agrega despesas (com data) e receitas do Controle Financeiro, além dos
+// eventos próprios, em uma lista unificada de lançamentos do calendário.
+// A Gestão de Dívidas é mantida separada e não aparece aqui.
 export function buildEntries(
   finance: FinanceState,
-  debts: Debt[],
   events: CalendarEvent[],
 ): CalendarEntry[] {
   const entries: CalendarEntry[] = []
@@ -87,23 +85,6 @@ export function buildEntries(
     })
   }
 
-  // Parcelas das dívidas, pelo vencimento.
-  for (const d of debts) {
-    const total = effectiveCount(d.installmentPlan, d.installmentCount)
-    for (const inst of d.installments) {
-      entries.push({
-        id: `debt-${d.id}-${inst.id}`,
-        date: inst.dueDate,
-        title: `${d.creditor} · parcela ${inst.number}/${total}`,
-        kind: "divida",
-        source: "dividas",
-        amount: inst.amount,
-        paid: inst.paid,
-        editable: false,
-      })
-    }
-  }
-
   // Eventos cadastrados no próprio Calendário.
   for (const ev of events) {
     entries.push({
@@ -128,8 +109,8 @@ export function groupByDate(entries: CalendarEntry[]): Map<string, CalendarEntry
     if (list) list.push(e)
     else map.set(e.date, [e])
   }
-  // Ordena cada dia: receitas primeiro, depois despesas, dívidas e eventos.
-  const order: Record<string, number> = { receita: 0, despesa: 1, divida: 2, evento: 3 }
+  // Ordena cada dia: receitas primeiro, depois despesas e eventos.
+  const order: Record<string, number> = { receita: 0, despesa: 1, evento: 2 }
   for (const list of map.values()) {
     list.sort((a, b) => (order[a.kind] ?? 9) - (order[b.kind] ?? 9))
   }
@@ -137,14 +118,13 @@ export function groupByDate(entries: CalendarEntry[]): Map<string, CalendarEntry
 }
 
 // Totais de receita/despesa de um mês ("yyyy-mm") a partir dos lançamentos.
-// Dívidas entram como despesa no cômputo do saldo previsto.
 export function monthTotals(entries: CalendarEntry[], monthKey: string) {
   let receita = 0
   let despesa = 0
   for (const e of entries) {
     if (!e.date.startsWith(monthKey)) continue
     if (e.kind === "receita") receita += e.amount ?? 0
-    else if (e.kind === "despesa" || e.kind === "divida") despesa += e.amount ?? 0
+    else if (e.kind === "despesa") despesa += e.amount ?? 0
   }
   return { receita, despesa, saldo: receita - despesa }
 }
