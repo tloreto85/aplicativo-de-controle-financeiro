@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import type { Bucket, Category } from "@/lib/types"
-import { ACCENT_COLORS, BUCKET_LABELS } from "@/lib/types"
+import { ACCENT_COLORS, BUCKET_LABELS, BUCKETS } from "@/lib/types"
 import {
   Dialog,
   DialogContent,
@@ -30,18 +30,16 @@ interface Props {
   onUpdate: (id: string, patch: { name: string; color: string; bucket: Bucket }) => void
 }
 
-const BUCKETS: Bucket[] = ["essenciais", "dividas", "pessoal", "investimentos", "outros"]
-
 export function CategoryDialog({ open, onOpenChange, editing, onCreate, onUpdate }: Props) {
   const [name, setName] = useState("")
   const [color, setColor] = useState(ACCENT_COLORS[0])
-  const [bucket, setBucket] = useState<Bucket>("essenciais")
+  const [bucket, setBucket] = useState<Bucket>("necessidades")
 
   useEffect(() => {
     if (open) {
       setName(editing?.name ?? "")
       setColor(editing?.color ?? ACCENT_COLORS[0])
-      setBucket(editing?.bucket ?? "essenciais")
+      setBucket(editing?.bucket ?? "necessidades")
     }
   }, [open, editing])
 
@@ -61,7 +59,7 @@ export function CategoryDialog({ open, onOpenChange, editing, onCreate, onUpdate
         <DialogHeader>
           <DialogTitle>{editing ? "Editar categoria" : "Nova categoria"}</DialogTitle>
           <DialogDescription>
-            Defina o nome, a cor e a qual grupo da regra 50-30-20 esta categoria pertence.
+            Defina o nome, a cor e a qual grupo da regra 35-20-45 esta categoria pertence.
           </DialogDescription>
         </DialogHeader>
 
@@ -78,7 +76,7 @@ export function CategoryDialog({ open, onOpenChange, editing, onCreate, onUpdate
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="cat-bucket">Grupo (50-30-20)</Label>
+            <Label htmlFor="cat-bucket">Grupo (35-20-45)</Label>
             <Select value={bucket} onValueChange={(v) => setBucket(v as Bucket)}>
               <SelectTrigger id="cat-bucket">
                 <SelectValue />

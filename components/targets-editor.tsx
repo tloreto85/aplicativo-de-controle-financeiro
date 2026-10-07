@@ -1,7 +1,7 @@
 "use client"
 
 import type { Bucket } from "@/lib/types"
-import { BUCKET_LABELS } from "@/lib/types"
+import { BUCKET_LABELS, BUCKETS } from "@/lib/types"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,8 +10,6 @@ interface Props {
   targets: Record<Bucket, number>
   onChange: (targets: Record<Bucket, number>) => void
 }
-
-const BUCKETS: Bucket[] = ["essenciais", "dividas", "pessoal", "investimentos", "outros"]
 
 export function TargetsEditor({ targets, onChange }: Props) {
   const sum = BUCKETS.reduce((s, b) => s + (targets[b] || 0), 0)

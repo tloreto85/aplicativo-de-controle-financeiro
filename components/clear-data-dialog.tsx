@@ -43,8 +43,8 @@ export function ClearDataDialog({ onClear }: Props) {
             </div>
             <DialogTitle>Limpar todos os dados?</DialogTitle>
             <DialogDescription>
-              Esta ação remove todas as categorias, despesas e receitas cadastradas. As metas
-              voltam ao padrão. Não é possível desfazer.
+              Esta ação remove todas as despesas e receitas cadastradas. As categorias e as metas
+              voltam ao padrão da regra 35-20-45. Não é possível desfazer.
             </DialogDescription>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">

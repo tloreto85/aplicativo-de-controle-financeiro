@@ -112,7 +112,7 @@ export default function FinanceiroPage() {
             </div>
             <div>
               <h1 className="text-lg font-bold leading-tight text-card-foreground">Controle Financeiro</h1>
-              <p className="text-sm text-muted-foreground">Despesas, vencimentos e regra 50-30-20</p>
+              <p className="text-sm text-muted-foreground">Despesas, vencimentos e regra 35-20-45</p>
             </div>
           </div>
           <div className="flex items-center gap-4">

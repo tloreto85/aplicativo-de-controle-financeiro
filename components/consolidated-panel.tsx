@@ -1,7 +1,7 @@
 "use client"
 
 import type { Bucket, Category, Income } from "@/lib/types"
-import { BUCKET_LABELS } from "@/lib/types"
+import { BUCKET_COLORS, BUCKET_LABELS, BUCKETS } from "@/lib/types"
 import { formatBRL } from "@/lib/format"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
@@ -12,16 +12,6 @@ interface Props {
   categories: Category[]
   incomes: Income[]
   targets: Record<Bucket, number>
-}
-
-const BUCKETS: Bucket[] = ["essenciais", "dividas", "pessoal", "investimentos", "outros"]
-
-const BUCKET_COLORS: Record<Bucket, string> = {
-  essenciais: "var(--chart-1)",
-  dividas: "var(--chart-3)",
-  pessoal: "var(--chart-5)",
-  investimentos: "var(--chart-2)",
-  outros: "var(--chart-6)",
 }
 
 export function ConsolidatedPanel({ categories, incomes, targets }: Props) {
@@ -52,7 +42,7 @@ export function ConsolidatedPanel({ categories, incomes, targets }: Props) {
     <Card className="border-primary/30">
       <CardHeader className="rounded-t-xl bg-primary py-3">
         <CardTitle className="text-center text-base font-bold uppercase tracking-wide text-primary-foreground">
-          Consolidado — Regra 50% · 30% · 20%
+          Consolidado — Regra {BUCKETS.map((b) => `${targets[b]}%`).join(" · ")}
         </CardTitle>
       </CardHeader>
       <CardContent className="grid gap-6 pt-6 lg:grid-cols-[1.6fr_1fr]">

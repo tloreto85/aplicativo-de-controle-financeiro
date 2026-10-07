@@ -16,6 +16,7 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
+  --color-chart-9: var(--chart-9);
   --color-chart-8: var(--chart-8);
   --color-chart-7: var(--chart-7);
   --color-chart-6: var(--chart-6);
@@ -87,6 +88,7 @@
   --chart-6: oklch(0.62 0.13 190);
   --chart-7: oklch(0.68 0.15 110);
   --chart-8: oklch(0.6 0.16 350);
+  --chart-9: oklch(0.55 0.15 300); /* Reserva Imprevistos */
   /* Categorias de dívida por valor (semáforo) - mesmas cores em claro/escuro */
   --debt-green: oklch(0.65 0.16 150);
   --debt-yellow: oklch(0.8 0.15 90);
@@ -131,6 +133,7 @@
   --chart-6: oklch(0.62 0 0);
   --chart-7: oklch(0.5 0 0);
   --chart-8: oklch(0.33 0 0);
+  --chart-9: oklch(0.45 0 0);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
@@ -170,6 +173,7 @@
     --chart-6: oklch(0.62 0 0);
     --chart-7: oklch(0.5 0 0);
     --chart-8: oklch(0.33 0 0);
+  --chart-9: oklch(0.45 0 0);
     --sidebar: oklch(0.205 0 0);
     --sidebar-foreground: oklch(0.985 0 0);
     --sidebar-primary: oklch(0.488 0.243 264.376);
