@@ -1,6 +1,6 @@
 # Controle Financeiro
 
-Sistema de controle financeiro pessoal inspirado em planilhas de orçamento doméstico. Reúne o **Controle Financeiro** (despesas por categoria e regra **50-30-20**), a **Gestão de Dívidas** (parcelamentos e impacto no orçamento) e um **Calendário** visual que consolida todos os lançamentos por dia.
+Sistema de controle financeiro pessoal inspirado em planilhas de orçamento doméstico. Reúne o **Controle Financeiro** (despesas por categoria e regra **35-20-45**), a **Gestão de Dívidas** (parcelamentos e impacto no orçamento) e um **Calendário** visual que consolida todos os lançamentos por dia.
 
 Os dados são salvos automaticamente no **navegador (localStorage)** — não há servidor nem login. Cada navegador/dispositivo mantém seus próprios dados.
 
@@ -8,7 +8,7 @@ Os dados são salvos automaticamente no **navegador (localStorage)** — não h�
 
 O app é organizado em módulos acessíveis pelo menu inicial:
 
-- **Controle Financeiro** — orçamento mensal por categoria, receitas, metas e consolidado 50-30-20.
+- **Controle Financeiro** — orçamento mensal por categoria, receitas, metas e consolidado 35-20-45.
 - **Gestão de Dívidas** — cadastro de dívidas parceladas, registro de pagamentos e análise de impacto na renda.
 - **Consolidado Anual** — visão de todas as receitas e despesas do ano, com filtros de categoria e gráficos.
 - **Calendário** — visão mensal estilo agenda que reúne receitas e despesas do Controle Financeiro e eventos próprios.
@@ -20,7 +20,11 @@ O app é organizado em módulos acessíveis pelo menu inicial:
 - **Despesas por categoria** — cada categoria tem cabeçalho colorido, itens com descrição, valor (R$) e data, além de total automático.
 - **Categorias editáveis** — crie, renomeie, troque a cor e o grupo (Essenciais, Dívidas/Cartões, Pessoal, Investimentos), ou exclua categorias.
 - **Receitas por mês** — cada receita pertence ao mês em que foi cadastrada. Ao trocar de mês, o novo período começa sem receitas, em vez de repetir os valores do mês anterior.
-- **Metas 50-30-20** — ajuste os percentuais de cada grupo da regra.
+- **Regra 35-20-45** — despesas agrupadas em três grupos, com percentuais ajustáveis:
+  - **Necessidades/Obrigações (35%)**: Moradia, Pessoal, Filho, Dívidas, Carro, Alimentação/Supermercado.
+  - **Qualidade de vida/Lazer (20%)**: Lazer/Restaurante/Compras.
+  - **Patrimônio/Objetivos (45%)**: Reserva Imprevistos, Investimentos.
+  - Bases antigas (50-30-20) são migradas automaticamente, mantendo as despesas já cadastradas.
 - **Painel consolidado** — compara o valor *Estimado* x *Realizado* por grupo, com status (Ok / Acima), percentual de uso e o saldo final (*Diff*).
 - **Mês atual pré-selecionado** — ao abrir a tela, o mês corrente já vem selecionado; use o seletor de período para navegar entre os meses.
 - **Exportação CSV/Excel** — baixe os lançamentos do período filtrado em um arquivo `.csv` pronto para abrir no Excel (pt-BR).
@@ -115,7 +119,7 @@ O app é organizado em módulos acessíveis pelo menu inicial:
 
 ## Como usar no dia a dia
 
-1. **Cadastre suas receitas.** No painel **Receitas**, adicione cada fonte de renda (ex: salário, pró-labore). A soma é a base da regra 50-30-20.
+1. **Cadastre suas receitas.** No painel **Receitas**, adicione cada fonte de renda (ex: salário, pró-labore). A soma é a base da regra 35-20-45.
 
 2. **Ajuste suas metas (opcional).** No painel **Metas**, defina os percentuais de cada grupo (por padrão Essenciais, Dívidas/Cartões, Pessoal e Investimentos). A soma ideal é 100%.
 
@@ -161,7 +165,7 @@ app/
 components/
   category-card.tsx             # Card de uma categoria com seus itens
   category-dialog.tsx           # Diálogo de criar/editar categoria
-  consolidated-panel.tsx        # Painel da regra 50-30-20
+  consolidated-panel.tsx        # Painel da regra 35-20-45
   annual-consolidation.tsx      # Consolidado anual com filtros e gráficos
   distribution-chart.tsx        # Gráfico de pizza/donut
   filter-bar.tsx                # Filtro por mês + exportar CSV

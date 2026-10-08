@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import type { Bucket, Category, Expense, FinanceState, Income } from "./types"
+import { BUCKETS, DEFAULT_CATEGORIES, DEFAULT_TARGETS, SCHEMA_VERSION } from "./types"
 import { buildExpensesCsv, downloadCsv } from "./export"
 import { currentMonthKey } from "./format"
 
@@ -14,18 +15,62 @@ function uid() {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36)
 }
 
-// Default percentages used for a fresh base.
-const DEFAULT_TARGETS: Record<Bucket, number> = {
-  essenciais: 50,
-  dividas: 30,
-  pessoal: 0,
-  investimentos: 20,
-  outros: 0,
+// Grupos da antiga regra 50-30-20 mapeados para a regra 35-20-45.
+const LEGACY_BUCKET_MAP: Record<string, Bucket> = {
+  essenciais: "necessidades",
+  dividas: "necessidades",
+  pessoal: "necessidades",
+  outros: "qualidade",
+  investimentos: "patrimonio",
 }
 
-// A clean base (no categories/incomes) for a given year.
+function normalizeName(name: string) {
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase()
+}
+
+function toBucket(raw: string): Bucket {
+  if ((BUCKETS as string[]).includes(raw)) return raw as Bucket
+  return LEGACY_BUCKET_MAP[raw] ?? "necessidades"
+}
+
+function defaultCategories(): Category[] {
+  return DEFAULT_CATEGORIES.map((c) => ({ ...c, id: uid(), expenses: [] }))
+}
+
+// Base limpa do ano, já com as categorias padrão da regra 35-20-45.
 function emptyState(year: number): FinanceState {
-  return { categories: [], incomes: [], targets: { ...DEFAULT_TARGETS }, year }
+  return {
+    categories: defaultCategories(),
+    incomes: [],
+    targets: { ...DEFAULT_TARGETS },
+    year,
+    schemaVersion: SCHEMA_VERSION,
+  }
+}
+
+// Migra bases da regra 50-30-20: converte os grupos, adiciona as categorias
+// padrão que faltarem (sem apagar as existentes) e aplica as metas 35-20-45.
+function migrateLegacy(categories: Category[]): Category[] {
+  const migrated = categories.map((c) => {
+    const preset = DEFAULT_CATEGORIES.find((d) => normalizeName(d.name) === normalizeName(c.name))
+    return { ...c, bucket: preset?.bucket ?? toBucket(c.bucket) }
+  })
+  const existing = new Set(migrated.map((c) => normalizeName(c.name)))
+  const missing = DEFAULT_CATEGORIES.filter((d) => !existing.has(normalizeName(d.name))).map((d) => ({
+    ...d,
+    id: uid(),
+    expenses: [],
+  }))
+  return [...migrated, ...missing]
+}
+
+function withExpenses(name: string, expenses: Omit<Expense, "id">[]): Category {
+  const preset = DEFAULT_CATEGORIES.find((d) => d.name === name)!
+  return { ...preset, id: uid(), expenses: expenses.map((e) => ({ ...e, id: uid() })) }
 }
 
 // Information about an automatic year-end rollover, surfaced to the UI.
@@ -37,49 +82,29 @@ export interface RolloverInfo {
 }
 
 const defaultState: FinanceState = {
-  categories: [
-    {
-      id: uid(),
-      name: "Despesas Essenciais",
-      color: "var(--chart-1)",
-      bucket: "essenciais",
-      expenses: [
-        { id: uid(), name: "Aluguel", amount: 1800, date: "", paid: true },
-        { id: uid(), name: "Energia", amount: 216, date: "", paid: false },
-        { id: uid(), name: "Internet", amount: 122, date: "", paid: false },
-      ],
-    },
-    {
-      id: uid(),
-      name: "Pessoal",
-      color: "var(--chart-5)",
-      bucket: "pessoal",
-      expenses: [
-        { id: uid(), name: "Celular", amount: 185, date: "", paid: true },
-        { id: uid(), name: "Academia", amount: 100, date: "", paid: false },
-      ],
-    },
-    {
-      id: uid(),
-      name: "Dívidas",
-      color: "var(--chart-3)",
-      bucket: "dividas",
-      expenses: [{ id: uid(), name: "IPTU", amount: 167, date: "2026-07-01", paid: false }],
-    },
-    {
-      id: uid(),
-      name: "Investimentos",
-      color: "var(--chart-2)",
-      bucket: "investimentos",
-      expenses: [],
-    },
-  ],
+  categories: DEFAULT_CATEGORIES.map((d) => {
+    if (d.name === "Moradia")
+      return withExpenses(d.name, [
+        { name: "Aluguel", amount: 1800, date: "", paid: true },
+        { name: "Energia", amount: 216, date: "", paid: false },
+        { name: "Internet", amount: 122, date: "", paid: false },
+      ])
+    if (d.name === "Pessoal")
+      return withExpenses(d.name, [
+        { name: "Celular", amount: 185, date: "", paid: true },
+        { name: "Academia", amount: 100, date: "", paid: false },
+      ])
+    if (d.name === "Dívidas")
+      return withExpenses(d.name, [{ name: "IPTU", amount: 167, date: "2026-07-01", paid: false }])
+    return withExpenses(d.name, [])
+  }),
   incomes: [
     { id: uid(), name: "Salário", amount: 7800, month: CURRENT_MONTH },
     { id: uid(), name: "Pró-Labore", amount: 3200, month: CURRENT_MONTH },
   ],
-  targets: { essenciais: 50, dividas: 30, pessoal: 0, investimentos: 20, outros: 0 },
+  targets: { ...DEFAULT_TARGETS },
   year: CURRENT_YEAR,
+  schemaVersion: SCHEMA_VERSION,
 }
 
 export function useFinance() {
@@ -93,19 +118,27 @@ export function useFinance() {
       if (raw) {
         const parsed = JSON.parse(raw) as FinanceState
         const storedYear = parsed.year ?? CURRENT_YEAR
+        const isLegacy = (parsed.schemaVersion ?? 1) < SCHEMA_VERSION
+        // Ensure every expense has a `paid` flag (older data may lack it).
+        const baseCategories = (parsed.categories ?? []).map((c) => ({
+          ...c,
+          bucket: toBucket(c.bucket),
+          expenses: (c.expenses ?? []).map((e) => ({ ...e, paid: e.paid ?? false })),
+        }))
+        const storedTargets = parsed.targets as Partial<Record<Bucket, number>> | undefined
         const restored: FinanceState = {
-          // Ensure every expense has a `paid` flag (older data may lack it).
-          categories: (parsed.categories ?? []).map((c) => ({
-            ...c,
-            expenses: (c.expenses ?? []).map((e) => ({ ...e, paid: e.paid ?? false })),
-          })),
+          categories: isLegacy ? migrateLegacy(baseCategories) : baseCategories,
           // Receitas de bases antigas não tinham mês: atribui ao mês atual para
           // não perder o dado (a partir daqui cada receita vive no seu mês).
           incomes: (parsed.incomes ?? []).map((i) => ({ ...i, month: i.month ?? CURRENT_MONTH })),
-          // Merge with defaults so newly added buckets (ex.: "outros") existem
-          // mesmo em bases salvas antes dessa opção.
-          targets: { ...DEFAULT_TARGETS, ...(parsed.targets ?? {}) },
+          targets: isLegacy
+            ? { ...DEFAULT_TARGETS }
+            : Object.fromEntries(BUCKETS.map((b) => [b, storedTargets?.[b] ?? DEFAULT_TARGETS[b]])) as Record<
+                Bucket,
+                number
+              >,
           year: storedYear,
+          schemaVersion: SCHEMA_VERSION,
         }
 
         // Year-end rollover: archive the previous year and start a clean base.
