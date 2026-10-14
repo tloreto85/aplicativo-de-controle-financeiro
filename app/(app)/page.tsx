@@ -6,7 +6,7 @@ const options = [
   {
     href: "/financeiro",
     title: "Controle Financeiro",
-    description: "Gerencie despesas, vencimentos e acompanhe a regra 35-20-45.",
+    description: "Gerencie despesas, vencimentos e acompanhe a regra 50-30-20 ou 35-20-45.",
     icon: Wallet,
   },
   {

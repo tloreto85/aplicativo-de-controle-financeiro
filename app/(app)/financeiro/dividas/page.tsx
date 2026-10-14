@@ -7,7 +7,8 @@ import { useDebts } from "@/lib/use-debts"
 import { useFinance } from "@/lib/use-finance"
 import type { Debt } from "@/lib/debt-types"
 import { remainingAmount, DEBT_CATEGORY_INFO } from "@/lib/debt-types"
-import { formatBRL, currentMonthKey } from "@/lib/format"
+import { formatBRL } from "@/lib/format"
+import { monthInYear } from "@/lib/year-context"
 import { Button } from "@/components/ui/button"
 import { DebtCard } from "@/components/debts/debt-card"
 import { DebtDialog } from "@/components/debts/debt-dialog"
@@ -24,17 +25,17 @@ const CATEGORY_DOT: Record<string, string> = {
 
 export default function DividasPage() {
   const { debts, loaded, addDebt, updateDebt, removeDebt, toggleInstallment } = useDebts()
-  const { state, loaded: financeLoaded } = useFinance()
+  const { state, year, loaded: financeLoaded } = useFinance()
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<Debt | null>(null)
   const [view, setView] = useState<ViewMode>("grid")
 
-  // Renda usada na análise de impacto: receitas do mês corrente.
+  // Renda usada na análise de impacto: receitas do mês corrente do ano escolhido.
   const monthlyIncome = useMemo(() => {
-    const key = currentMonthKey()
+    const key = monthInYear(year)
     return state.incomes.filter((i) => i.month === key).reduce((sum, i) => sum + i.amount, 0)
-  }, [state.incomes])
+  }, [state.incomes, year])
 
   const totalRemaining = useMemo(
     () => debts.reduce((sum, d) => sum + remainingAmount(d), 0),

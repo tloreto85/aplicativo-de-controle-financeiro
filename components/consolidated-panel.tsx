@@ -12,9 +12,10 @@ interface Props {
   categories: Category[]
   incomes: Income[]
   targets: Record<Bucket, number>
+  labels?: Record<Bucket, string>
 }
 
-export function ConsolidatedPanel({ categories, incomes, targets }: Props) {
+export function ConsolidatedPanel({ categories, incomes, targets, labels = BUCKET_LABELS }: Props) {
   const totalIncome = incomes.reduce((sum, i) => sum + i.amount, 0)
 
   // Open (unpaid) expenses feed "Estimativa de Despesa";
@@ -70,7 +71,7 @@ export function ConsolidatedPanel({ categories, incomes, targets }: Props) {
                 <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-x-4">
                   <div className="flex items-center gap-2">
                     <span className="h-3 w-3 rounded-sm" style={{ backgroundColor: BUCKET_COLORS[b] }} />
-                    <span className="text-sm font-medium text-card-foreground">{BUCKET_LABELS[b]}</span>
+                    <span className="text-sm font-medium text-card-foreground">{labels[b]}</span>
                     <span className="text-xs text-muted-foreground">
                       ({targets[b]}% · {formatBRL(meta)})
                     </span>

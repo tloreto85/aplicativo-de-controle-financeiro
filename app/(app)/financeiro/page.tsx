@@ -5,7 +5,9 @@ import Link from "next/link"
 import { ArrowLeft, Plus, Wallet, Landmark, CalendarDays } from "lucide-react"
 import { useFinance } from "@/lib/use-finance"
 import type { Category } from "@/lib/types"
-import { formatBRL, monthKey, monthLabel, currentMonthKey } from "@/lib/format"
+import { RULES } from "@/lib/types"
+import { formatBRL, monthKey, monthLabel } from "@/lib/format"
+import { monthInYear } from "@/lib/year-context"
 import { buildExpensesCsv, downloadCsv } from "@/lib/export"
 import { Button } from "@/components/ui/button"
 import { CategoryCard } from "@/components/category-card"
@@ -16,16 +18,14 @@ import { ConsolidatedPanel } from "@/components/consolidated-panel"
 import { DistributionChart } from "@/components/distribution-chart"
 import { FilterBar, ALL_MONTHS } from "@/components/filter-bar"
 import { ClearDataDialog } from "@/components/clear-data-dialog"
-import { YearRolloverDialog } from "@/components/year-rollover-dialog"
 
 export default function FinanceiroPage() {
   const {
     state,
+    rule,
+    year,
     loaded,
-    rollover,
     clearAll,
-    downloadRollover,
-    dismissRollover,
     addCategory,
     updateCategory,
     removeCategory,
@@ -35,12 +35,16 @@ export default function FinanceiroPage() {
     addIncome,
     removeIncome,
     updateTargets,
+    updateRule,
   } = useFinance()
+  const labels = RULES[rule].labels
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<Category | null>(null)
-  // Ao abrir a tela, o mês corrente já vem selecionado (evita ter que clicar).
-  const [selectedMonth, setSelectedMonth] = useState<string>(() => currentMonthKey())
+  // Ao abrir a tela (ou trocar de ano), o mês corrente do ano já vem selecionado.
+  const [monthChoice, setMonthChoice] = useState<{ year: number; value: string } | null>(null)
+  const selectedMonth = monthChoice?.year === year ? monthChoice.value : monthInYear(year)
+  const setSelectedMonth = (value: string) => setMonthChoice({ year, value })
 
   // Categories with expenses filtered by the selected month (mutations still use ids).
   const filteredCategories = useMemo(() => {
@@ -58,7 +62,7 @@ export default function FinanceiroPage() {
   }, [state.incomes, selectedMonth])
 
   // Ao adicionar em "Todos os meses", a receita entra no mês corrente.
-  const incomeMonth = selectedMonth === ALL_MONTHS ? currentMonthKey() : selectedMonth
+  const incomeMonth = selectedMonth === ALL_MONTHS ? monthInYear(year) : selectedMonth
   const incomePeriodLabel = selectedMonth === ALL_MONTHS ? "Todos os meses" : monthLabel(selectedMonth)
 
   // Saldo considera apenas despesas efetivamente PAGAS; despesas em aberto
@@ -81,7 +85,7 @@ export default function FinanceiroPage() {
 
   function handleExport() {
     const csv = buildExpensesCsv(filteredCategories)
-    const suffix = selectedMonth === ALL_MONTHS ? "todos" : selectedMonth
+    const suffix = selectedMonth === ALL_MONTHS ? `${year}-todos` : selectedMonth
     downloadCsv(`despesas-${suffix}.csv`, csv)
   }
 
@@ -112,7 +116,9 @@ export default function FinanceiroPage() {
             </div>
             <div>
               <h1 className="text-lg font-bold leading-tight text-card-foreground">Controle Financeiro</h1>
-              <p className="text-sm text-muted-foreground">Despesas, vencimentos e regra 35-20-45</p>
+              <p className="text-sm text-muted-foreground">
+                {year} · Despesas, vencimentos e regra {rule}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -183,6 +189,7 @@ export default function FinanceiroPage() {
                   onRemoveExpense={removeExpense}
                   onRemoveCategory={removeCategory}
                   onEditCategory={openEdit}
+                  labels={labels}
                 />
               ))}
             </div>
@@ -196,7 +203,7 @@ export default function FinanceiroPage() {
             onAdd={(name, amount) => addIncome(name, amount, incomeMonth)}
             onRemove={removeIncome}
           />
-          <TargetsEditor targets={state.targets} onChange={updateTargets} />
+          <TargetsEditor targets={state.targets} rule={rule} onChange={updateTargets} onRuleChange={updateRule} />
         </section>
 
         <section>
@@ -204,7 +211,12 @@ export default function FinanceiroPage() {
         </section>
 
         <section>
-          <ConsolidatedPanel categories={filteredCategories} incomes={filteredIncomes} targets={state.targets} />
+          <ConsolidatedPanel
+            categories={filteredCategories}
+            incomes={filteredIncomes}
+            targets={state.targets}
+            labels={labels}
+          />
         </section>
       </div>
 
@@ -214,9 +226,9 @@ export default function FinanceiroPage() {
         editing={editing}
         onCreate={addCategory}
         onUpdate={updateCategory}
+        labels={labels}
+        ruleName={rule}
       />
-
-      <YearRolloverDialog info={rollover} onDownload={downloadRollover} onDismiss={dismissRollover} />
     </main>
   )
 }

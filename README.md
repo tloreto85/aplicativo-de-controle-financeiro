@@ -1,8 +1,12 @@
 # Controle Financeiro
 
-Sistema de controle financeiro pessoal inspirado em planilhas de orçamento doméstico. Reúne o **Controle Financeiro** (despesas por categoria e regra **35-20-45**), a **Gestão de Dívidas** (parcelamentos e impacto no orçamento) e um **Calendário** visual que consolida todos os lançamentos por dia.
+Sistema de controle financeiro pessoal inspirado em planilhas de orçamento doméstico. Reúne o **Controle Financeiro** (despesas por categoria e regra **35-20-45** ou **50-30-20**, à sua escolha), a **Gestão de Dívidas** (parcelamentos e impacto no orçamento) e um **Calendário** visual que consolida todos os lançamentos por dia.
 
-Os dados são salvos automaticamente no **navegador (localStorage)** — não há servidor nem login. Cada navegador/dispositivo mantém seus próprios dados.
+Os dados são salvos automaticamente em um **banco de dados Postgres (Neon)**, vinculados à sua conta (login com e-mail e senha). Assim, você acessa as mesmas informações de qualquer computador ou navegador.
+
+## Ano de trabalho
+
+No topo de todas as telas há o seletor **Ano de trabalho**. Escolha o ano (ou use as setas) e o Controle Financeiro, a Gestão de Dívidas, o Consolidado e o Calendário passam a mostrar os dados daquele ano. Cada ano tem sua própria base, e a escolha fica salva na sua conta.
 
 ## Módulos
 
@@ -18,19 +22,18 @@ O app é organizado em módulos acessíveis pelo menu inicial:
 ### Controle Financeiro
 
 - **Despesas por categoria** — cada categoria tem cabeçalho colorido, itens com descrição, valor (R$) e data, além de total automático.
-- **Categorias editáveis** — crie, renomeie, troque a cor e o grupo (Essenciais, Dívidas/Cartões, Pessoal, Investimentos), ou exclua categorias.
+- **Categorias editáveis** — crie, renomeie, troque a cor e o grupo da regra escolhida, ou exclua categorias.
 - **Receitas por mês** — cada receita pertence ao mês em que foi cadastrada. Ao trocar de mês, o novo período começa sem receitas, em vez de repetir os valores do mês anterior.
-- **Regra 35-20-45** — despesas agrupadas em três grupos, com percentuais ajustáveis:
-  - **Necessidades/Obrigações (35%)**: Moradia, Pessoal, Filho, Dívidas, Carro, Alimentação/Supermercado.
-  - **Qualidade de vida/Lazer (20%)**: Lazer/Restaurante/Compras.
-  - **Patrimônio/Objetivos (45%)**: Reserva Imprevistos, Investimentos.
-  - Bases antigas (50-30-20) são migradas automaticamente, mantendo as despesas já cadastradas.
+- **Forma de distribuição escolhida por você** — no painel **Metas por grupo**, alterne entre as regras (por ano). Ao trocar, as categorias são remapeadas para os grupos equivalentes e as metas voltam ao padrão da regra, sem perder despesas:
+  - **35-20-45**: Necessidades/Obrigações (35%), Qualidade de vida/Lazer (20%), Patrimônio/Objetivos (45%).
+  - **50-30-20**: Necessidades (50%), Desejos/Estilo de vida (30%), Poupança/Investimentos (20%).
+  - Categorias padrão: Moradia, Pessoal, Filho, Dívidas, Carro, Alimentação/Supermercado (necessidades); Lazer/Restaurante/Compras (lazer); Reserva Imprevistos e Investimentos (patrimônio).
+  - Os percentuais de cada grupo continuam ajustáveis.
 - **Painel consolidado** — compara o valor *Estimado* x *Realizado* por grupo, com status (Ok / Acima), percentual de uso e o saldo final (*Diff*).
 - **Mês atual pré-selecionado** — ao abrir a tela, o mês corrente já vem selecionado; use o seletor de período para navegar entre os meses.
 - **Exportação CSV/Excel** — baixe os lançamentos do período filtrado em um arquivo `.csv` pronto para abrir no Excel (pt-BR).
 - **Gráfico de distribuição** — donut com a participação percentual de cada categoria no total de despesas.
-- **Limpar todos os dados** — botão no topo (com confirmação) que zera categorias, despesas e receitas a qualquer momento, voltando as metas ao padrão.
-- **Virada de ano automática** — ao abrir o app em um ano novo, os dados do ano anterior são exportados automaticamente em um arquivo Excel/CSV e uma base em branco é criada para o novo ano, com um aviso explicando o que aconteceu.
+- **Limpar dados do ano** — botão no topo (com confirmação) que zera categorias, despesas e receitas do ano selecionado, voltando as metas ao padrão.
 
 ### Gestão de Dívidas
 
@@ -94,7 +97,17 @@ O app é organizado em módulos acessíveis pelo menu inicial:
    # ou: yarn
    ```
 
-4. **Inicie o servidor de desenvolvimento:**
+4. **Configure as variáveis de ambiente.** Crie um arquivo `.env.local` na raiz com:
+
+   ```bash
+   DATABASE_URL="postgresql://..."      # string de conexão do banco Neon
+   BETTER_AUTH_SECRET="..."             # gere com: openssl rand -base64 32
+   BETTER_AUTH_URL="http://localhost:3000"
+   ```
+
+   Usando o mesmo `DATABASE_URL` em qualquer computador, você acessa os mesmos dados.
+
+5. **Inicie o servidor de desenvolvimento:**
 
    ```bash
    pnpm dev
@@ -102,7 +115,7 @@ O app é organizado em módulos acessíveis pelo menu inicial:
    # ou: yarn dev
    ```
 
-5. **Abra no navegador:** acesse [http://localhost:3000](http://localhost:3000).
+6. **Abra no navegador:** acesse [http://localhost:3000](http://localhost:3000) e crie sua conta.
 
    A página recarrega automaticamente sempre que você salvar uma alteração no código.
 
@@ -121,7 +134,7 @@ O app é organizado em módulos acessíveis pelo menu inicial:
 
 1. **Cadastre suas receitas.** No painel **Receitas**, adicione cada fonte de renda (ex: salário, pró-labore). A soma é a base da regra 35-20-45.
 
-2. **Ajuste suas metas (opcional).** No painel **Metas**, defina os percentuais de cada grupo (por padrão Essenciais, Dívidas/Cartões, Pessoal e Investimentos). A soma ideal é 100%.
+2. **Escolha a regra e ajuste as metas (opcional).** No painel **Metas por grupo**, escolha entre 35-20-45 e 50-30-20 e, se quiser, ajuste os percentuais. A soma ideal é 100%.
 
 3. **Organize suas categorias.** Use **Nova categoria** para criar blocos (ex: Aluguel, Alimentação, Cartão). Para cada uma, escolha a cor e a qual grupo da regra ela pertence. É possível editar ou excluir pelos ícones no cabeçalho do card.
 
@@ -137,15 +150,11 @@ O app é organizado em módulos acessíveis pelo menu inicial:
 
 9. **Comece do zero quando quiser.** Use **Limpar dados** (no topo) para zerar tudo a qualquer momento. Há uma confirmação antes de apagar — exporte o CSV antes, se quiser manter um histórico.
 
-### Fechamento de ano automático
+### Trabalhando com vários anos
 
-Ao abrir o aplicativo já em um novo ano (ex: a primeira vez que você acessar em 2027 com dados de 2026), o app automaticamente:
+Use o seletor **Ano de trabalho** no topo para alternar entre anos. Um ano novo começa com as categorias padrão e sem lançamentos; os anos anteriores continuam salvos e podem ser consultados a qualquer momento.
 
-1. **Exporta** todos os lançamentos do ano anterior em um arquivo `controle-financeiro-ANO.csv` (download imediato; se o navegador bloquear, há um botão para baixar manualmente).
-2. **Cria uma base em branco** para o novo ano.
-3. **Exibe um aviso** confirmando que os dados foram arquivados e que uma nova base foi iniciada.
-
-> **Importante:** os dados ficam salvos somente no navegador onde foram inseridos. Se limpar os dados do navegador, ou usar outro dispositivo/navegador, os lançamentos não estarão disponíveis. Use a exportação CSV como cópia de segurança.
+> **Dados antigos do navegador:** se você usava a versão anterior (que salvava no navegador), esses dados são importados automaticamente para sua conta no primeiro acesso de cada módulo.
 
 ---
 

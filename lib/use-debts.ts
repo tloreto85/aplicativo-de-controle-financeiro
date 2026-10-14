@@ -1,10 +1,13 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback } from "react"
 import type { Debt, Installment } from "./debt-types"
 import { buildInstallments, effectiveCount } from "./debt-types"
+import { loadAppData } from "@/app/actions/app-data"
+import { usePersistedState } from "./use-persisted-state"
+import { useYear } from "./year-context"
 
-const STORAGE_KEY = "gestao-dividas-v1"
+const LEGACY_STORAGE_KEY = "gestao-dividas-v1"
 
 function uid() {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36)
@@ -41,37 +44,6 @@ function rebuildInstallments(existing: Debt, patch: Partial<DebtInput>, start: s
       ? { ...i, paid: true, paidDate: paidDates.get(i.number) ?? start }
       : i,
   )
-}
-
-const seedInput: DebtInput[] = [
-  {
-    creditor: "Banco Itaú",
-    contract: "Empréstimo pessoal nº 12345",
-    dueDay: 5,
-    totalAmount: 12000,
-    installmentPlan: true,
-    installmentCount: 24,
-  },
-  {
-    creditor: "Loja Mais",
-    contract: "Cartão - compra de eletrodoméstico",
-    dueDay: 10,
-    totalAmount: 2400,
-    installmentPlan: true,
-    installmentCount: 12,
-  },
-]
-
-function makeSeed(): Debt[] {
-  const start = todayIso()
-  return seedInput.map((input) => {
-    const debt = buildDebt(input, start)
-    // Marca as duas primeiras parcelas como pagas apenas no exemplo inicial.
-    debt.installments = debt.installments.map((i) =>
-      i.number <= 2 ? { ...i, paid: true, paidDate: i.dueDate } : i,
-    )
-    return debt
-  })
 }
 
 // Migra dados antigos (modelo de `payments` livres) para o novo modelo de
@@ -120,28 +92,43 @@ function migrateLegacyDebt(raw: unknown, start: string): Debt {
   return { ...base, id: d.id ?? uid(), installments: migrated }
 }
 
+function restoreDebts(raw: unknown): Debt[] {
+  const start = todayIso()
+  return (Array.isArray(raw) ? raw : []).map((d) => migrateLegacyDebt(d, start))
+}
+
+// Ano novo: leva as dívidas do ano anterior que ainda têm parcelas em aberto.
+async function createDebts(year: number): Promise<Debt[]> {
+  try {
+    const prev = await loadAppData(`debts:${year - 1}`)
+    if (prev.found) return restoreDebts(prev.data).filter((d) => d.installments.some((i) => !i.paid))
+  } catch {
+    // sem base anterior acessível
+  }
+  return []
+}
+
+// Importa as dívidas salvas no navegador (antes do banco) para o ano atual.
+function legacyDebts(year: number): Debt[] | null {
+  if (year !== new Date().getFullYear()) return null
+  try {
+    const raw = localStorage.getItem(LEGACY_STORAGE_KEY)
+    return raw ? restoreDebts(JSON.parse(raw)) : null
+  } catch {
+    return null
+  }
+}
+
+const EMPTY: Debt[] = []
+
 export function useDebts() {
-  const [debts, setDebts] = useState<Debt[]>(makeSeed)
-  const [loaded, setLoaded] = useState(false)
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) {
-        const parsed = JSON.parse(raw) as unknown[]
-        const start = todayIso()
-        setDebts((parsed ?? []).map((d) => migrateLegacyDebt(d, start)))
-      }
-    } catch {
-      // ignore malformed data
-    }
-    setLoaded(true)
-  }, [])
-
-  useEffect(() => {
-    if (!loaded) return
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(debts))
-  }, [debts, loaded])
+  const { year } = useYear()
+  const [persisted, setDebts, loaded] = usePersistedState<Debt[]>(year ? `debts:${year}` : null, {
+    restore: restoreDebts,
+    create: () => createDebts(year as number),
+    legacy: () => legacyDebts(year as number),
+  })
+  const debts = persisted ?? EMPTY
 
   const addDebt = useCallback((input: DebtInput) => {
     setDebts((list) => [...list, buildDebt(input, todayIso())])

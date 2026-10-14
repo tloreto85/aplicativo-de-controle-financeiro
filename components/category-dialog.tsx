@@ -28,9 +28,19 @@ interface Props {
   editing: Category | null
   onCreate: (name: string, color: string, bucket: Bucket) => void
   onUpdate: (id: string, patch: { name: string; color: string; bucket: Bucket }) => void
+  labels?: Record<Bucket, string>
+  ruleName?: string
 }
 
-export function CategoryDialog({ open, onOpenChange, editing, onCreate, onUpdate }: Props) {
+export function CategoryDialog({
+  open,
+  onOpenChange,
+  editing,
+  onCreate,
+  onUpdate,
+  labels = BUCKET_LABELS,
+  ruleName = "35-20-45",
+}: Props) {
   const [name, setName] = useState("")
   const [color, setColor] = useState(ACCENT_COLORS[0])
   const [bucket, setBucket] = useState<Bucket>("necessidades")
@@ -59,7 +69,7 @@ export function CategoryDialog({ open, onOpenChange, editing, onCreate, onUpdate
         <DialogHeader>
           <DialogTitle>{editing ? "Editar categoria" : "Nova categoria"}</DialogTitle>
           <DialogDescription>
-            Defina o nome, a cor e a qual grupo da regra 35-20-45 esta categoria pertence.
+            Defina o nome, a cor e a qual grupo da regra {ruleName} esta categoria pertence.
           </DialogDescription>
         </DialogHeader>
 
@@ -76,7 +86,7 @@ export function CategoryDialog({ open, onOpenChange, editing, onCreate, onUpdate
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="cat-bucket">Grupo (35-20-45)</Label>
+            <Label htmlFor="cat-bucket">Grupo ({ruleName})</Label>
             <Select value={bucket} onValueChange={(v) => setBucket(v as Bucket)}>
               <SelectTrigger id="cat-bucket">
                 <SelectValue />
@@ -84,7 +94,7 @@ export function CategoryDialog({ open, onOpenChange, editing, onCreate, onUpdate
               <SelectContent>
                 {BUCKETS.map((b) => (
                   <SelectItem key={b} value={b}>
-                    {BUCKET_LABELS[b]}
+                    {labels[b]}
                   </SelectItem>
                 ))}
               </SelectContent>

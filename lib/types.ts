@@ -35,9 +35,12 @@ export interface FinanceState {
   incomes: Income[]
   // target percentages per bucket (sum should be ~100)
   targets: Record<Bucket, number>
-  // calendar year this base belongs to; used to roll over at year-end
+  // ano a que esta base pertence (cada ano tem sua própria base)
   year: number
-  // 2 = regra 35-20-45. Bases sem versão usam a antiga regra 50-30-20.
+  // regra de distribuição escolhida pelo usuário para este ano
+  rule?: RuleId
+  // 2 = grupos necessidades/qualidade/patrimonio. Bases sem versão usam os
+  // grupos antigos (essenciais, dívidas, pessoal, outros, investimentos).
   schemaVersion?: number
 }
 
@@ -45,11 +48,37 @@ export const SCHEMA_VERSION = 2
 
 export const BUCKETS: Bucket[] = ["necessidades", "qualidade", "patrimonio"]
 
-export const BUCKET_LABELS: Record<Bucket, string> = {
-  necessidades: "Necessidades/Obrigações",
-  qualidade: "Qualidade de vida/Lazer",
-  patrimonio: "Patrimônio/Objetivos",
+export type RuleId = "35-20-45" | "50-30-20"
+
+export const RULE_IDS: RuleId[] = ["35-20-45", "50-30-20"]
+
+export const DEFAULT_RULE: RuleId = "35-20-45"
+
+// Os três grupos são os mesmos nas duas regras; mudam os nomes e as metas.
+export const RULES: Record<RuleId, { labels: Record<Bucket, string>; targets: Record<Bucket, number> }> = {
+  "35-20-45": {
+    labels: {
+      necessidades: "Necessidades/Obrigações",
+      qualidade: "Qualidade de vida/Lazer",
+      patrimonio: "Patrimônio/Objetivos",
+    },
+    targets: { necessidades: 35, qualidade: 20, patrimonio: 45 },
+  },
+  "50-30-20": {
+    labels: {
+      necessidades: "Necessidades",
+      qualidade: "Desejos/Estilo de vida",
+      patrimonio: "Poupança/Investimentos",
+    },
+    targets: { necessidades: 50, qualidade: 30, patrimonio: 20 },
+  },
 }
+
+export function ruleOf(state: Pick<FinanceState, "rule">): RuleId {
+  return state.rule && RULES[state.rule] ? state.rule : DEFAULT_RULE
+}
+
+export const BUCKET_LABELS: Record<Bucket, string> = RULES[DEFAULT_RULE].labels
 
 export const BUCKET_COLORS: Record<Bucket, string> = {
   necessidades: "var(--chart-4)",
@@ -57,11 +86,7 @@ export const BUCKET_COLORS: Record<Bucket, string> = {
   patrimonio: "var(--chart-2)",
 }
 
-export const DEFAULT_TARGETS: Record<Bucket, number> = {
-  necessidades: 35,
-  qualidade: 20,
-  patrimonio: 45,
-}
+export const DEFAULT_TARGETS: Record<Bucket, number> = RULES[DEFAULT_RULE].targets
 
 export const DEFAULT_CATEGORIES: { name: string; color: string; bucket: Bucket }[] = [
   { name: "Moradia", color: "var(--chart-1)", bucket: "necessidades" },
