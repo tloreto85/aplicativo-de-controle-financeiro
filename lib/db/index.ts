@@ -11,5 +11,20 @@ if (!connectionString) {
   )
 }
 
+function getHostname(url: string) {
+  try {
+    return new URL(url).hostname
+  } catch {
+    return ""
+  }
+}
+
+const hostname = getHostname(connectionString)
+if (!hostname || /^\.+$/.test(hostname) || connectionString.includes("...")) {
+  throw new Error(
+    "DATABASE_URL inválido em .env.local (parece ser o texto de exemplo). Cole a connection string completa do Neon (Neon Console > Connect), no formato postgresql://usuario:senha@ep-xxxx.region.aws.neon.tech/neondb?sslmode=require, e reinicie o servidor.",
+  )
+}
+
 export const pool = new Pool({ connectionString })
 export const db = drizzle(pool, { schema })
