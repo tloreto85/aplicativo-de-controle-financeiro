@@ -12,7 +12,7 @@
     "@base-ui/react": "^1.5.0",
     "@vercel/analytics": "1.6.1",
     "ai": "^7.0.4",
-    "better-auth": "^1.7.8",
+    "better-auth": "^1.7.7",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.4",
@@ -39,10 +39,5 @@
     "postcss": "^8.5",
     "tailwindcss": "^4.2.0",
     "typescript": "5.7.3"
-  },
-  "pnpm": {
-    "overrides": {
-      "hono": "4.12.25"
-    }
   }
 }
