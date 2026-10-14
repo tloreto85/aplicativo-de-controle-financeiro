@@ -5,6 +5,7 @@ import Link from "next/link"
 import { ArrowLeft, CalendarDays, ChevronLeft, ChevronRight } from "lucide-react"
 import { useFinance } from "@/lib/use-finance"
 import { useCalendarEvents } from "@/lib/use-calendar-events"
+import { useYear } from "@/lib/year-context"
 import { KIND_META } from "@/lib/calendar-types"
 import {
   buildEntries,
@@ -23,8 +24,17 @@ export default function CalendarioPage() {
   const { events, loaded: eventsLoaded, addEvent, updateEvent, removeEvent } = useCalendarEvents()
 
   const today = todayIso()
-  const [now] = useState(() => new Date())
-  const [cursor, setCursor] = useState(() => ({ year: now.getFullYear(), month0: now.getMonth() }))
+  const { year, setYear } = useYear()
+  const workingYear = year ?? new Date().getFullYear()
+  // O calendário mostra o ano de trabalho: abre no mês corrente desse ano e,
+  // ao navegar para outro ano, troca o ano de trabalho junto.
+  const [month0, setMonth0] = useState(() => new Date().getMonth())
+  const cursor = useMemo(() => ({ year: workingYear, month0 }), [workingYear, month0])
+  const setCursor = (update: (c: { year: number; month0: number }) => { year: number; month0: number }) => {
+    const next = update(cursor)
+    setMonth0(next.month0)
+    if (next.year !== workingYear) setYear(next.year)
+  }
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
 
   const loaded = finance.loaded && eventsLoaded
@@ -60,7 +70,7 @@ export default function CalendarioPage() {
   }
   function goToday() {
     const d = new Date()
-    setCursor({ year: d.getFullYear(), month0: d.getMonth() })
+    setCursor(() => ({ year: d.getFullYear(), month0: d.getMonth() }))
   }
 
   if (!loaded) {

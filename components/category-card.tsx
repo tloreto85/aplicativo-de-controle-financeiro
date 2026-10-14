@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Plus, Trash2, Check, X, Pencil, CircleCheck, Circle } from "lucide-react"
 import type { Category, Expense } from "@/lib/types"
-import { BUCKET_LABELS } from "@/lib/types"
+import { BUCKET_LABELS, type Bucket } from "@/lib/types"
 import { formatBRL, formatDateShort } from "@/lib/format"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,10 +18,12 @@ interface Props {
   onRemoveExpense: (categoryId: string, expenseId: string) => void
   onRemoveCategory: (id: string) => void
   onEditCategory: (category: Category) => void
+  labels?: Record<Bucket, string>
 }
 
 export function CategoryCard({
   category,
+  labels = BUCKET_LABELS,
   defaultMonth,
   onAddExpense,
   onUpdateExpense,
@@ -60,7 +62,7 @@ export function CategoryCard({
       >
         <div className="flex flex-col">
           <h3 className="text-sm font-semibold leading-tight text-white">{category.name}</h3>
-          <span className="text-[11px] font-medium text-white/80">{BUCKET_LABELS[category.bucket]}</span>
+          <span className="text-[11px] font-medium text-white/80">{labels[category.bucket]}</span>
         </div>
         <div className="flex items-center gap-1">
           <button

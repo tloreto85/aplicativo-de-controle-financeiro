@@ -1,14 +1,15 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback } from "react"
 import {
   DEFAULT_SHOPPING_CATEGORIES,
   type ShoppingItem,
   type ShoppingList,
   type ShoppingState,
 } from "./shopping-types"
+import { usePersistedState } from "./use-persisted-state"
 
-const STORAGE_KEY = "lista-de-compras-v1"
+const LEGACY_STORAGE_KEY = "lista-de-compras-v1"
 
 function uid() {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36)
@@ -23,30 +24,30 @@ const defaultState: ShoppingState = {
   categories: [...DEFAULT_SHOPPING_CATEGORIES],
 }
 
+function restoreShopping(raw: unknown): ShoppingState {
+  const parsed = (raw ?? {}) as Partial<ShoppingState>
+  return {
+    lists: parsed.lists ?? [],
+    categories: parsed.categories?.length ? parsed.categories : [...DEFAULT_SHOPPING_CATEGORIES],
+  }
+}
+
+function legacyShopping(): ShoppingState | null {
+  try {
+    const raw = localStorage.getItem(LEGACY_STORAGE_KEY)
+    return raw ? restoreShopping(JSON.parse(raw)) : null
+  } catch {
+    return null
+  }
+}
+
 export function useShopping() {
-  const [state, setState] = useState<ShoppingState>(defaultState)
-  const [loaded, setLoaded] = useState(false)
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) {
-        const parsed = JSON.parse(raw) as ShoppingState
-        setState({
-          lists: parsed.lists ?? [],
-          categories: parsed.categories?.length ? parsed.categories : [...DEFAULT_SHOPPING_CATEGORIES],
-        })
-      }
-    } catch {
-      // ignore malformed data
-    }
-    setLoaded(true)
-  }, [])
-
-  useEffect(() => {
-    if (!loaded) return
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
-  }, [state, loaded])
+  const [persisted, setState, loaded] = usePersistedState<ShoppingState>("shopping", {
+    restore: restoreShopping,
+    create: () => ({ ...defaultState, categories: [...DEFAULT_SHOPPING_CATEGORIES] }),
+    legacy: legacyShopping,
+  })
+  const state = persisted ?? defaultState
 
   // --- List CRUD ---
 
