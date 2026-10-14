@@ -29,8 +29,15 @@ export interface Debt {
   installmentPlan: boolean
   // Quantidade de parcelas (válido quando installmentPlan = true)
   installmentCount: number
+  // Vencimento da 1ª parcela (ISO yyyy-mm-dd). Quando informado, o cronograma
+  // começa nessa data e as demais parcelas vencem mês a mês no mesmo dia.
+  firstDueDate?: string
   // Cronograma de parcelas gerado automaticamente
   installments: Installment[]
+}
+
+export function isIsoDate(value: string | undefined): value is string {
+  return !!value && /^\d{4}-\d{2}-\d{2}$/.test(value)
 }
 
 // Quantidade efetiva de parcelas: uma dívida à vista é tratada como 1 parcela.
@@ -50,16 +57,18 @@ function lastDayOfMonth(year: number, month1to12: number): number {
   return new Date(year, month1to12, 0).getDate()
 }
 
-// Gera o cronograma de parcelas: uma parcela por mês, começando no mês de
-// `startIso` (padrão: mês atual), no dia `dueDay` (limitado ao último dia de
-// cada mês). Os valores são arredondados em centavos e o resíduo vai na última
-// parcela, garantindo que a soma feche exatamente com o total.
+// Gera o cronograma de parcelas: uma parcela por mês, no dia `dueDay` (limitado
+// ao último dia de cada mês). Começa em `firstDueDate` quando informado (usando
+// o dia dessa data); senão, no mês de `startIso`. Os valores são arredondados
+// em centavos e o resíduo vai na última parcela, garantindo que a soma feche
+// exatamente com o total.
 export function buildInstallments(
   opts: {
     totalAmount: number
     installmentPlan: boolean
     installmentCount: number
     dueDay: number
+    firstDueDate?: string
   },
   startIso: string,
   makeId: () => string,
@@ -67,8 +76,9 @@ export function buildInstallments(
   const n = effectiveCount(opts.installmentPlan, opts.installmentCount)
   if (opts.totalAmount <= 0 || n <= 0) return []
 
-  const [startY, startM] = startIso.split("-").map(Number)
-  const day = Math.min(Math.max(opts.dueDay || 1, 1), 31)
+  const hasFirst = isIsoDate(opts.firstDueDate)
+  const [startY, startM, firstDay] = (hasFirst ? opts.firstDueDate! : startIso).split("-").map(Number)
+  const day = Math.min(Math.max((hasFirst ? firstDay : opts.dueDay) || 1, 1), 31)
 
   const perCents = Math.round((opts.totalAmount * 100) / n)
   const totalCents = Math.round(opts.totalAmount * 100)

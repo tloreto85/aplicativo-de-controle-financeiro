@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react"
 import type { Debt } from "@/lib/debt-types"
+import { buildInstallments, isIsoDate } from "@/lib/debt-types"
 import type { DebtInput } from "@/lib/use-debts"
-import { formatBRL } from "@/lib/format"
+import { formatBRL, formatDateBR } from "@/lib/format"
 import {
   Dialog,
   DialogContent,
@@ -38,6 +39,7 @@ export function DebtDialog({ open, onOpenChange, editing, onCreate, onUpdate }: 
   const [totalAmount, setTotalAmount] = useState("")
   const [installmentPlan, setInstallmentPlan] = useState(false)
   const [installmentCount, setInstallmentCount] = useState("")
+  const [firstDueDate, setFirstDueDate] = useState("")
 
   useEffect(() => {
     if (open) {
@@ -47,14 +49,28 @@ export function DebtDialog({ open, onOpenChange, editing, onCreate, onUpdate }: 
       setTotalAmount(editing ? String(editing.totalAmount) : "")
       setInstallmentPlan(editing?.installmentPlan ?? false)
       setInstallmentCount(editing && editing.installmentCount ? String(editing.installmentCount) : "")
+      setFirstDueDate(editing?.firstDueDate ?? "")
     }
   }, [open, editing])
 
   const total = Number.parseFloat(totalAmount.replace(",", ".")) || 0
   const count = Number.parseInt(installmentCount, 10) || 0
   const perInstallment = installmentPlan && count > 0 ? total / count : total
-  // Dia do vencimento limitado a 1-31 (0 quando não informado).
-  const day = Math.min(Math.max(Number.parseInt(dueDay, 10) || 0, 0), 31)
+  const useFirstDate = installmentPlan && isIsoDate(firstDueDate)
+  // Com a 1ª parcela informada, o dia do vencimento passa a ser o dessa data.
+  const day = useFirstDate
+    ? Number(firstDueDate.split("-")[2])
+    : Math.min(Math.max(Number.parseInt(dueDay, 10) || 0, 0), 31)
+
+  const schedule =
+    useFirstDate && count > 0 && total > 0
+      ? buildInstallments(
+          { totalAmount: total, installmentPlan, installmentCount: count, dueDay: day, firstDueDate },
+          firstDueDate,
+          () => "",
+        )
+      : []
+  const lastDueDate = schedule.at(-1)?.dueDate
 
   function submit() {
     if (!creditor.trim() || total <= 0) return
@@ -65,6 +81,7 @@ export function DebtDialog({ open, onOpenChange, editing, onCreate, onUpdate }: 
       totalAmount: total,
       installmentPlan,
       installmentCount: installmentPlan ? count : 0,
+      firstDueDate: useFirstDate ? firstDueDate : undefined,
     }
     if (editing) {
       onUpdate(editing.id, input)
@@ -121,11 +138,18 @@ export function DebtDialog({ open, onOpenChange, editing, onCreate, onUpdate }: 
               <Label htmlFor="debt-due">Dia do vencimento</Label>
               <Input
                 id="debt-due"
-                value={dueDay}
+                value={useFirstDate ? String(day) : dueDay}
                 onChange={(e) => setDueDay(e.target.value.replace(/\D/g, "").slice(0, 2))}
                 placeholder="Ex: 10"
                 inputMode="numeric"
+                disabled={useFirstDate}
+                aria-describedby={useFirstDate ? "debt-due-hint" : undefined}
               />
+              {useFirstDate && (
+                <p id="debt-due-hint" className="text-xs text-muted-foreground">
+                  Definido pela 1ª parcela
+                </p>
+              )}
             </div>
           </div>
 
@@ -160,12 +184,39 @@ export function DebtDialog({ open, onOpenChange, editing, onCreate, onUpdate }: 
             )}
           </div>
 
+          {installmentPlan && (
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="debt-first-due">Vencimento da 1ª parcela</Label>
+              <Input
+                id="debt-first-due"
+                type="date"
+                value={firstDueDate}
+                onChange={(e) => setFirstDueDate(e.target.value)}
+                aria-describedby="debt-first-due-hint"
+              />
+              <p id="debt-first-due-hint" className="text-xs text-muted-foreground">
+                As demais parcelas vencem mês a mês, no mesmo dia. Se não informar, o cronograma
+                começa no mês atual.
+              </p>
+            </div>
+          )}
+
           {installmentPlan && count > 0 && total > 0 && (
-            <div className="flex items-center justify-between rounded-md bg-accent px-3 py-2 text-sm">
-              <span className="text-accent-foreground">Valor de cada parcela</span>
-              <span className="font-mono font-semibold text-accent-foreground">
-                {count}x de {formatBRL(perInstallment)}
-              </span>
+            <div className="flex flex-col gap-1 rounded-md bg-accent px-3 py-2 text-sm text-accent-foreground">
+              <div className="flex items-center justify-between">
+                <span>Valor de cada parcela</span>
+                <span className="font-mono font-semibold">
+                  {count}x de {formatBRL(perInstallment)}
+                </span>
+              </div>
+              {useFirstDate && lastDueDate && (
+                <div className="flex items-center justify-between">
+                  <span>Período</span>
+                  <span className="font-mono">
+                    {formatDateBR(firstDueDate)} a {formatDateBR(lastDueDate)}
+                  </span>
+                </div>
+              )}
             </div>
           )}
         </div>
