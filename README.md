@@ -68,6 +68,8 @@ O app é organizado em módulos acessíveis pelo menu inicial:
 
 ## Como rodar o projeto localmente
 
+> **Instalação rápida:** siga o guia [docs/INSTALACAO.md](docs/INSTALACAO.md) e use `iniciar.cmd` (Windows) ou `./iniciar.sh` (macOS/Linux). O script instala as dependências, cria o `.env.local`, prepara o banco e inicia o app.
+
 ### Pré-requisitos
 
 - [Node.js](https://nodejs.org/) 18.18 ou superior (recomendado: versão LTS mais recente)
@@ -127,6 +129,7 @@ O app é organizado em módulos acessíveis pelo menu inicial:
 | `pnpm build`   | Gera a versão de produção otimizada.               |
 | `pnpm start`   | Executa a versão de produção (após o `build`).     |
 | `pnpm lint`    | Roda o linter para verificar o código.             |
+| `pnpm setup`   | Cria o `.env.local` (se faltar) e as tabelas do banco. |
 
 ---
 
