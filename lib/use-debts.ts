@@ -20,7 +20,13 @@ function todayIso() {
 // Fields the user provides when creating/editing a debt (computed/derived fields excluded).
 export type DebtInput = Pick<
   Debt,
-  "creditor" | "contract" | "dueDay" | "totalAmount" | "installmentPlan" | "installmentCount"
+  | "creditor"
+  | "contract"
+  | "dueDay"
+  | "totalAmount"
+  | "installmentPlan"
+  | "installmentCount"
+  | "firstDueDate"
 >
 
 // Cria uma dívida completa (com cronograma de parcelas) a partir do input.
@@ -38,7 +44,10 @@ function rebuildInstallments(existing: Debt, patch: Partial<DebtInput>, start: s
   const merged = { ...existing, ...patch }
   const paidNumbers = new Set(existing.installments.filter((i) => i.paid).map((i) => i.number))
   const paidDates = new Map(existing.installments.map((i) => [i.number, i.paidDate]))
-  const fresh = buildInstallments(merged, start, uid)
+  // Sem 1ª parcela informada, mantém o mês de início do cronograma existente
+  // em vez de reiniciá-lo no mês atual.
+  const firstExisting = existing.installments.find((i) => i.number === 1)?.dueDate
+  const fresh = buildInstallments(merged, firstExisting ?? start, uid)
   return fresh.map((i) =>
     paidNumbers.has(i.number)
       ? { ...i, paid: true, paidDate: paidDates.get(i.number) ?? start }
@@ -66,6 +75,7 @@ function migrateLegacyDebt(raw: unknown, start: string): Debt {
     totalAmount: d.totalAmount ?? 0,
     installmentPlan: d.installmentPlan ?? false,
     installmentCount: d.installmentCount ?? 0,
+    firstDueDate: d.firstDueDate,
   }
 
   // Já está no novo modelo: só garante o array.
