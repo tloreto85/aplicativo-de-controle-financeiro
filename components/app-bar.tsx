@@ -1,9 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { CalendarRange, ChevronLeft, ChevronRight, LogOut, Wallet } from "lucide-react"
-import { authClient } from "@/lib/auth-client"
+import { CalendarRange, ChevronLeft, ChevronRight, Wallet } from "lucide-react"
 import { MAX_YEAR, MIN_YEAR, useYear } from "@/lib/year-context"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -15,16 +13,9 @@ function yearOptions(selected: number) {
   return Array.from({ length: to - from + 1 }, (_, i) => to - i)
 }
 
-export function AppBar({ userName }: { userName: string }) {
-  const router = useRouter()
+export function AppBar() {
   const { year, setYear } = useYear()
   const options = yearOptions(year ?? new Date().getFullYear())
-
-  async function signOut() {
-    await authClient.signOut()
-    router.push("/sign-in")
-    router.refresh()
-  }
 
   return (
     <div className="border-b border-border bg-card print:hidden">
@@ -76,13 +67,7 @@ export function AppBar({ userName }: { userName: string }) {
           </Button>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="hidden max-w-40 truncate text-sm text-muted-foreground md:inline">{userName}</span>
-          <Button variant="outline" size="sm" onClick={signOut}>
-            <LogOut className="size-4" aria-hidden="true" />
-            Sair
-          </Button>
-        </div>
+
       </div>
     </div>
   )

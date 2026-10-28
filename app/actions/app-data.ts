@@ -1,18 +1,18 @@
 "use server"
 
-import { headers } from "next/headers"
-import { and, eq } from "drizzle-orm"
-import { auth } from "@/lib/auth"
+import { eq, and } from "drizzle-orm"
 import { db } from "@/lib/db"
 import { appData } from "@/lib/db/schema"
 
 const KEY_PATTERN = /^(settings|shopping|(finance|debts|calendar):\d{4})$/
 const MAX_BYTES = 2_000_000
 
-async function getUserId() {
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session?.user) throw new Error("Unauthorized")
-  return session.user.id
+// O app é público: todos os usuários compartilham a mesma base no Neon.
+// O valor fixo preserva a chave composta existente sem exigir migração.
+const SHARED_USER_ID = "public-shared"
+
+function getUserId() {
+  return SHARED_USER_ID
 }
 
 function assertKey(key: string) {

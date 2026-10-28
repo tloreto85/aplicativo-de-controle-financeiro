@@ -2,11 +2,11 @@
 
 Sistema de controle financeiro pessoal inspirado em planilhas de orçamento doméstico. Reúne o **Controle Financeiro** (despesas por categoria e regra **35-20-45** ou **50-30-20**, à sua escolha), a **Gestão de Dívidas** (parcelamentos e impacto no orçamento) e um **Calendário** visual que consolida todos os lançamentos por dia.
 
-Os dados são salvos automaticamente em um **banco de dados Postgres (Neon)**, vinculados à sua conta (login com e-mail e senha). Assim, você acessa as mesmas informações de qualquer computador ou navegador.
+Os dados são salvos automaticamente em um **banco de dados Postgres (Neon)**, em uma base compartilhada para todos os usuários. Não é necessário criar conta ou fazer login.
 
 ## Ano de trabalho
 
-No topo de todas as telas há o seletor **Ano de trabalho**. Escolha o ano (ou use as setas) e o Controle Financeiro, a Gestão de Dívidas, o Consolidado e o Calendário passam a mostrar os dados daquele ano. Cada ano tem sua própria base, e a escolha fica salva na sua conta.
+No topo de todas as telas há o seletor **Ano de trabalho**. Escolha o ano (ou use as setas) e o Controle Financeiro, a Gestão de Dívidas, o Consolidado e o Calendário passam a mostrar os dados daquele ano.
 
 ## Módulos
 
@@ -117,7 +117,7 @@ O app é organizado em módulos acessíveis pelo menu inicial:
    # ou: yarn dev
    ```
 
-6. **Abra no navegador:** acesse [http://localhost:3000](http://localhost:3000) e crie sua conta.
+6. **Abra no navegador:** acesse [http://localhost:3000](http://localhost:3000). O app estará disponível imediatamente, sem login.
 
    A página recarrega automaticamente sempre que você salvar uma alteração no código.
 
@@ -157,7 +157,7 @@ O app é organizado em módulos acessíveis pelo menu inicial:
 
 Use o seletor **Ano de trabalho** no topo para alternar entre anos. Um ano novo começa com as categorias padrão e sem lançamentos; os anos anteriores continuam salvos e podem ser consultados a qualquer momento.
 
-> **Dados antigos do navegador:** se você usava a versão anterior (que salvava no navegador), esses dados são importados automaticamente para sua conta no primeiro acesso de cada módulo.
+> **Dados antigos do navegador:** se você usava a versão anterior (que salvava no navegador), esses dados são importados automaticamente para a base compartilhada no primeiro acesso de cada módulo.
 
 ---
 
