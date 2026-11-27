@@ -4,7 +4,7 @@ import { eq, and } from "drizzle-orm"
 import { db } from "@/lib/db"
 import { appData } from "@/lib/db/schema"
 
-const KEY_PATTERN = /^(settings|shopping|(finance|debts|calendar):\d{4})$/
+const KEY_PATTERN = /^(settings|shopping|investments|(finance|debts|calendar):\d{4})$/
 const MAX_BYTES = 2_000_000
 
 // O app é público: todos os usuários compartilham a mesma base no Neon.
